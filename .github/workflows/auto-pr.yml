@@ -1,0 +1,64 @@
+name: Auto Pull Request
+
+on:
+  push:
+    branches:
+      - "feature/**"
+      - "bugfix/*"
+      - "refactor/*"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  auto-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_API_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_API_KEY }}
+        run: npm run build
+
+      - name: Create Pull Request (Auto)
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE_BRANCH="main"
+          git fetch origin $BASE_BRANCH
+
+          # 1. Commits & Internal Stats
+          printf "## 📝 Commits\n" > pr_body.txt
+          git log origin/$BASE_BRANCH..HEAD --pretty=format:"- %s (%h)" >> pr_body.txt
+          printf "\n\n## 📊 File Changes\n\`\`\`\n" >> pr_body.txt
+          git diff origin/$BASE_BRANCH..HEAD --stat >> pr_body.txt
+          printf "\`\`\`\n" >> pr_body.txt
+
+          printf "%s\n" "$(cat pr_body.txt)" > pr_description.md
+
+          gh pr create \
+            --base $BASE_BRANCH \
+            --head ${{ github.ref_name }} \
+            --title "PR: ${{ github.ref_name }}" \
+            --body-file pr_description.md \
+            || echo "PR already exists or encountered an error"

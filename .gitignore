@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ghostdev-agent
+packages/ghostdev-agent/dist/
+packages/ghostdev-agent/node_modules/

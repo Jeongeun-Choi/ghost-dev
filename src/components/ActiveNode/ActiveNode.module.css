@@ -1,0 +1,181 @@
+.activeNodeSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 3rem 2rem 2rem;
+  position: relative;
+}
+
+/* Left side magenta accent bar */
+.activeNodeSection::before {
+  content: "";
+  position: absolute;
+  left: 2rem;
+  top: 3.5rem;
+  bottom: 2rem;
+  width: 4px;
+  background-color: var(--neon-pink);
+  box-shadow: 0 0 8px var(--neon-pink-glow);
+}
+
+.leftContainer {
+  padding-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.systemStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusIcon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.statusText {
+  font-family: var(--font-mono);
+  color: var(--neon-pink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.nodeTitle {
+  font-family: var(--font-sans);
+  font-size: 3rem;
+  font-weight: 900;
+  font-style: italic;
+  color: #ffffff;
+  line-height: 1.1;
+  text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.2);
+  margin: 0;
+}
+
+.rightContainer {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+/* Repo Selector */
+.repoSelector {
+  position: relative;
+}
+
+.dropdownButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1rem 1.5rem;
+  background-color: transparent;
+  border: 2px solid var(--neon-cyan);
+  border-radius: 4px;
+  box-shadow:
+    0 0 10px var(--neon-cyan-glow),
+    inset 0 0 10px rgba(0, 255, 255, 0.1);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  min-width: 300px;
+}
+
+.dropdownButton:hover {
+  background-color: rgba(0, 255, 255, 0.05);
+  box-shadow:
+    0 0 15px var(--neon-cyan-glow),
+    inset 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.repoInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  margin-top: 0.5rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  text-align: left;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: all 0.2s ease;
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownItem:hover {
+  background-color: rgba(0, 255, 255, 0.1);
+  color: var(--neon-cyan);
+}
+
+/* Add Ticket Button */
+.addTicketBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background-color: var(--neon-pink);
+  color: white;
+  border: 2px solid var(--neon-pink);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  box-shadow: 0 0 15px var(--neon-pink-glow);
+  transition: all 0.2s ease;
+  transform: skewX(-10deg);
+}
+
+.addTicketBtn > * {
+  transform: skewX(10deg);
+}
+
+.addTicketBtn:hover {
+  background-color: transparent;
+  color: var(--neon-pink);
+  box-shadow:
+    0 0 25px var(--neon-pink-glow),
+    inset 0 0 15px var(--neon-pink-glow);
+}
+
+.plusIcon {
+  font-size: 1.5rem;
+  font-weight: 400;
+}
