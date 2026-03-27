@@ -21,7 +21,7 @@ Your goal is to implement the given ticket by:
 Guidelines:
 - Read files before modifying them
 - Make changes incrementally — don't rewrite everything at once
-- Run lint/typecheck after making changes if possible
+- Run lint/typecheck after making changes: check the project's package.json scripts and prefer fix commands (e.g. \`npm run lint:fix\`, \`npm run lint -- --fix\`) over read-only lint. Also run typecheck if a script exists (e.g. \`npm run typecheck\`, \`npm run type-check\`, or \`npm run build\` if it includes tsc). If no lint or typecheck script exists, skip this step
 - Write a clear, concise PR description summarizing what you changed and why
 - Always use the createPR tool as your final action
 
