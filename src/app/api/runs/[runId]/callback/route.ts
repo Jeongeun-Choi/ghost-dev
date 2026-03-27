@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // callback_token 검증
   const { data: run } = await supabase
     .from("ghostdev_agent_runs")
-    .select("id, callback_token")
+    .select("id, callback_token, ticket_id")
     .eq("id", runId)
     .single();
 
@@ -48,6 +48,13 @@ export async function POST(request: NextRequest, { params }: Params) {
       total_tokens: parsed.data.totalTokens,
     })
     .eq("id", runId);
+
+  if (run.ticket_id) {
+    await supabase
+      .from("ghostdev_tickets")
+      .update({ status: "DONE" })
+      .eq("id", run.ticket_id);
+  }
 
   return NextResponse.json({ ok: true });
 }
