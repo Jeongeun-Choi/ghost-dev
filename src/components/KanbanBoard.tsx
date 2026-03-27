@@ -17,20 +17,12 @@ interface KanbanBoardProps {
   workspaceConfig?: WorkspaceConfig | null;
 }
 
-export function KanbanBoard({
-  tickets,
-  projectId,
-  workspaceConfig,
-}: KanbanBoardProps) {
-  function resolveWorkspaceTag(
-    targetWorkspace: string | null,
-  ): string | undefined {
+export function KanbanBoard({ tickets, projectId, workspaceConfig }: KanbanBoardProps) {
+  const resolveWorkspaceTag = (targetWorkspace: string | null): string | undefined => {
     if (!targetWorkspace || !workspaceConfig) return undefined;
-    const pkg = workspaceConfig.packages.find(
-      (p) => p.path === targetWorkspace,
-    );
+    const pkg = workspaceConfig.packages.find((p) => p.path === targetWorkspace);
     return pkg ? pkg.displayName : targetWorkspace;
-  }
+  };
 
   return (
     <div className={s.board}>
@@ -39,9 +31,7 @@ export function KanbanBoard({
         return (
           <div key={status} className={s.column}>
             <div className={s.columnHeader}>
-              <div
-                className={`${s.indicator} ${s.indicatorVariants[status]}`}
-              />
+              <div className={`${s.indicator} ${s.indicatorVariants[status]}`} />
               <span className={s.columnTitle}>{label}</span>
               <span className={s.count}>CNT: {columnTickets.length}</span>
             </div>

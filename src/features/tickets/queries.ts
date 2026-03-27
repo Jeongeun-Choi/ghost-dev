@@ -19,6 +19,7 @@ export async function createTicket(data: {
   baseBranch?: string;
   targetWorkspace?: string | null;
   priority?: number;
+  status?: TicketStatus;
 }) {
   const res = await fetch("/api/tickets", {
     method: "POST",

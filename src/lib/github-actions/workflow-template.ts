@@ -71,6 +71,11 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Authenticate with GitHub Packages
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.GHOSTDEV_NPM_TOKEN }}" >> ~/.npmrc
+          echo "@ghostdev:registry=https://npm.pkg.github.com" >> ~/.npmrc
+
       - name: Run GhostDev Agent
         env:
           # 유저 본인의 API 키 — GhostDev가 프로젝트 연결 시 자동 등록

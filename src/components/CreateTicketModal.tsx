@@ -12,6 +12,9 @@ type Prefix = (typeof PREFIXES)[number];
 const PRIORITIES = ["HIGH", "MEDIUM", "LOW"] as const;
 type Priority = (typeof PRIORITIES)[number];
 
+const STATUSES = ["TODO", "IN_PROGRESS", "DONE", "FAILED"] as const;
+type Status = (typeof STATUSES)[number];
+
 const PRIORITY_MAP: Record<Priority, number> = {
   HIGH: 3,
   MEDIUM: 2,
@@ -37,6 +40,7 @@ export function CreateTicketModal({
   const [directives, setDirectives] = useState("");
   const [selectedPrefix, setSelectedPrefix] = useState<Prefix>("FEATURE");
   const [selectedPriority, setSelectedPriority] = useState<Priority>("MEDIUM");
+  const [selectedStatus, setSelectedStatus] = useState<Status>("TODO");
   const [branchSlug, setBranchSlug] = useState("unnamed-task");
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,6 +98,7 @@ export function CreateTicketModal({
           baseBranch: defaultBranch,
           targetWorkspace: defaultWorkspace ?? null,
           priority: PRIORITY_MAP[selectedPriority],
+          status: selectedStatus,
         });
         router.refresh();
         onClose();
@@ -108,6 +113,7 @@ export function CreateTicketModal({
       defaultBranch,
       defaultWorkspace,
       selectedPriority,
+      selectedStatus,
       submitTicket,
       router,
       onClose,
@@ -193,6 +199,26 @@ export function CreateTicketModal({
                   {PRIORITIES.map((p) => (
                     <option key={p} value={p}>
                       {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={s.controlGroup}>
+                <label className={s.label} htmlFor="status-select">
+                  STATUS
+                </label>
+                <select
+                  id="status-select"
+                  className={s.prioritySelect}
+                  value={selectedStatus}
+                  onChange={(e) =>
+                    setSelectedStatus(e.target.value as Status)
+                  }
+                >
+                  {STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
                     </option>
                   ))}
                 </select>

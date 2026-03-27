@@ -104,24 +104,42 @@ export async function POST(_request: NextRequest, { params }: Params) {
   try {
     // 2. workflow_dispatch 트리거 — provider_token은 저장 안 함
     const octokit = createOctokit(token);
+    const dispatchRef = ticket.base_branch ?? project.default_branch;
     await octokit.actions.createWorkflowDispatch({
       owner: project.repo_owner,
       repo: project.repo_name,
       workflow_id: project.workflow_file,
-      ref: ticket.base_branch ?? project.default_branch,
+      ref: dispatchRef,
       inputs: dispatchInputs,
     });
 
-    // 3. QUEUED로 업데이트
+    // 3. dispatch 직후 GitHub run 폴링 (3초 대기 후 최신 run 조회)
+    await new Promise((r) => setTimeout(r, 3000));
+    const { data: runsData } = await octokit.actions.listWorkflowRuns({
+      owner: project.repo_owner,
+      repo: project.repo_name,
+      workflow_id: project.workflow_file,
+      branch: dispatchRef,
+      per_page: 1,
+    });
+    const latestRun = runsData.workflow_runs[0];
+
+    // 4. QUEUED로 업데이트 (github_run_id / github_run_url 포함)
     await supabase
       .from("ghostdev_agent_runs")
       .update({
         status: "QUEUED",
         dispatch_inputs: JSON.stringify(dispatchInputs),
+        ...(latestRun
+          ? {
+              github_run_id: String(latestRun.id),
+              github_run_url: latestRun.html_url,
+            }
+          : {}),
       })
       .eq("id", run.id);
 
-    // 4. 티켓 상태를 IN_PROGRESS로 업데이트
+    // 5. 티켓 상태를 IN_PROGRESS로 업데이트
     await supabase
       .from("ghostdev_tickets")
       .update({ status: "IN_PROGRESS" })

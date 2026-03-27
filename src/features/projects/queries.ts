@@ -6,7 +6,6 @@ export const projectKeys = {
 
 export async function fetchProjects() {
   const res = await fetch("/api/projects");
-  console.log("fetchProjects response", res);
   if (!res.ok) throw new Error("프로젝트 목록을 불러오지 못했습니다.");
   return res.json();
 }
@@ -27,7 +26,10 @@ export async function createProject(data: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("프로젝트 생성에 실패했습니다.");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.details ?? body.error ?? "프로젝트 생성에 실패했습니다.");
+  }
   return res.json();
 }
 
@@ -43,9 +45,7 @@ export async function fetchGitHubRepos() {
 }
 
 export async function fetchMonorepoConfig(owner: string, repo: string) {
-  const res = await fetch(
-    `/api/github/detect-monorepo?owner=${owner}&repo=${repo}`,
-  );
+  const res = await fetch(`/api/github/detect-monorepo?owner=${owner}&repo=${repo}`);
   if (!res.ok) return null;
   return res.json();
 }

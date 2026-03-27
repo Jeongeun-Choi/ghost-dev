@@ -69,11 +69,10 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Setup pnpm and Install dependencies
+      - name: Authenticate with GitHub Packages
         run: |
-          npm i -g pnpm@9
-          pnpm install --no-frozen-lockfile
-          pnpm --filter @ghostdev/agent build
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GHOSTDEV_NPM_TOKEN }}" >> ~/.npmrc
+          echo "@ghostdev:registry=https://npm.pkg.github.com" >> ~/.npmrc
 
       - name: Run GhostDev Agent
         id: agent_run
@@ -93,7 +92,7 @@ jobs:
           GHOSTDEV_TARGET_WORKSPACE: ${{ inputs.target_workspace }}
           # GitHub Actions 기본 제공 토큰 (PR 생성에 사용)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm --filter @ghostdev/agent start
+        run: npx @ghostdev/agent@latest
 
       - name: Report Error to GhostDev Server
         if: steps.agent_run.outcome == 'failure'

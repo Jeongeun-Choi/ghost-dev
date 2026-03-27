@@ -41,14 +41,12 @@ export async function POST(request: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const body = await request.json();
   const parsed = createProjectSchema.safeParse(body);
-
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid request", details: parsed.error.flatten() },
@@ -56,7 +54,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { data: created } = await supabase
+  const { data: created, error: insertError } = await supabase
     .from("ghostdev_projects")
     .insert({
       user_id: session.user.id,
@@ -72,6 +70,12 @@ export async function POST(request: NextRequest) {
     })
     .select()
     .single();
+  if (insertError || !created) {
+    return NextResponse.json(
+      { error: "프로젝트 저장에 실패했습니다.", details: insertError?.message },
+      { status: 500 },
+    );
+  }
 
   // workflow 파일 + 시크릿 자동 설치 (실패해도 project 생성은 유지)
   let workflowInstalled: boolean | null = null;
@@ -92,7 +96,10 @@ export async function POST(request: NextRequest) {
       // 에이전트 실행에 필요한 시크릿 자동 등록
       const secrets = [
         { name: "ANTHROPIC_API_KEY", value: process.env.ANTHROPIC_API_KEY! },
-      ].filter((s) => s.value);
+        { name: "GHOSTDEV_NPM_TOKEN", value: process.env.GHOSTDEV_NPM_TOKEN! },
+      ].filter(
+        (s) => s.value,
+      );
 
       if (secrets.length > 0) {
         const secretResult = await installRepoSecrets(
@@ -110,8 +117,5 @@ export async function POST(request: NextRequest) {
     secretsInstalled = secretsInstalled ?? false;
   }
 
-  return NextResponse.json(
-    { ...created, workflowInstalled, secretsInstalled },
-    { status: 201 },
-  );
+  return NextResponse.json({ ...created, workflowInstalled, secretsInstalled }, { status: 201 });
 }

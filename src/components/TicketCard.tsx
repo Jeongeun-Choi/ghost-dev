@@ -23,11 +23,7 @@ interface TicketCardProps {
   workspaceTag?: string;
 }
 
-export function TicketCard({
-  ticket,
-  projectId,
-  workspaceTag,
-}: TicketCardProps) {
+export function TicketCard({ ticket, projectId, workspaceTag }: TicketCardProps) {
   const router = useRouter();
   const triggerRun = useTriggerRun(projectId);
   const priority = getPriority(ticket.priority);
@@ -37,6 +33,9 @@ export function TicketCard({
     triggerRun.mutate(ticket.id, {
       onSuccess: ({ runId }) => {
         router.push(`/projects/${projectId}/runs/${runId}`);
+      },
+      onError: (error) => {
+        alert(error.message);
       },
     });
   };
@@ -51,29 +50,21 @@ export function TicketCard({
       <p className={s.title}>{ticket.title}</p>
 
       <div className={s.cardFooter}>
-        <span className={`${s.badge} ${s.badgeVariants[priority]}`}>
-          {priority}
-        </span>
+        <span className={`${s.badge} ${s.badgeVariants[priority]}`}>{priority}</span>
 
-        {(ticket.status === "TODO" || ticket.status === "FAILED") && (
-          <button
-            className={s.playButton}
-            onClick={handleRun}
-            disabled={triggerRun.isPending}
-            title={
-              ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"
-            }
-            style={
-              ticket.status === "FAILED" ? { color: "#EF4444" } : undefined
-            }
-          >
-            {triggerRun.isPending
-              ? "⟳"
-              : ticket.status === "FAILED"
-                ? "⟳"
-                : "▶"}
-          </button>
-        )}
+        <button
+          className={s.playButton}
+          onClick={handleRun}
+          disabled={triggerRun.isPending}
+          title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
+          style={
+            triggerRun.isError || ticket.status === "FAILED"
+              ? { color: "#EF4444" }
+              : undefined
+          }
+        >
+          {triggerRun.isPending ? "⟳" : triggerRun.isError ? "✕" : ticket.status === "FAILED" ? "⟳" : "▶"}
+        </button>
       </div>
     </div>
   );

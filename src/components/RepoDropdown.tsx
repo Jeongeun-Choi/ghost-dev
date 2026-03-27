@@ -30,8 +30,7 @@ export function RepoDropdown({ initialRepo, onRepoSelect }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(initialRepo);
   const queryClient = useQueryClient();
-  const isDetectingMonorepo =
-    useIsFetching({ queryKey: ["github", "monorepo"] }) > 0;
+  const isDetectingMonorepo = useIsFetching({ queryKey: ["github", "monorepo"] }) > 0;
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -39,7 +38,6 @@ export function RepoDropdown({ initialRepo, onRepoSelect }: Props) {
     isLoading: isGitHubReposLoading,
     refetch: refetchGitHubRepos,
   } = useGitHubRepos();
-
   const displayName = isDetectingMonorepo
     ? "DETECTING..."
     : selected
@@ -55,11 +53,10 @@ export function RepoDropdown({ initialRepo, onRepoSelect }: Props) {
     if (!onRepoSelect) return;
 
     try {
-      const workspaceConfig: WorkspaceConfig | null =
-        await queryClient.fetchQuery({
-          queryKey: ["github", "monorepo", repo.owner, repo.name],
-          queryFn: () => fetchMonorepoConfig(repo.owner, repo.name),
-        });
+      const workspaceConfig: WorkspaceConfig | null = await queryClient.fetchQuery({
+        queryKey: ["github", "monorepo", repo.owner, repo.name],
+        queryFn: () => fetchMonorepoConfig(repo.owner, repo.name),
+      });
       onRepoSelect({ ...repo, workspaceConfig });
     } catch {
       onRepoSelect({ ...repo, workspaceConfig: null });
@@ -68,10 +65,7 @@ export function RepoDropdown({ initialRepo, onRepoSelect }: Props) {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
-      ) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -114,11 +108,7 @@ export function RepoDropdown({ initialRepo, onRepoSelect }: Props) {
             <div className={s.loadingText}>LOADING...</div>
           ) : (
             gitHubRepos.map((repo: GitHubRepo) => (
-              <div
-                key={repo.id}
-                className={s.repoItem}
-                onClick={() => handleRepoSelect(repo)}
-              >
+              <div key={repo.id} className={s.repoItem} onClick={() => handleRepoSelect(repo)}>
                 {repo.fullName}
               </div>
             ))

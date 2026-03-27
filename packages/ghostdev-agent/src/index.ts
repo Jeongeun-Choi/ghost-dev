@@ -27,6 +27,13 @@ async function reportTokenUsage(
 }
 
 async function main() {
+  // GitHub Actions에서 pnpm --filter 실행 시 cwd가 패키지 디렉토리로 바뀌므로
+  // GITHUB_WORKSPACE로 레포 루트로 이동
+  const githubWorkspace = process.env.GITHUB_WORKSPACE;
+  if (githubWorkspace) {
+    process.chdir(githubWorkspace);
+  }
+
   const runId = process.env.GHOSTDEV_RUN_ID;
   const ticketId = process.env.GHOSTDEV_TICKET_ID;
   const ticketTitle = process.env.GHOSTDEV_TICKET_TITLE;
