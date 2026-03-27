@@ -74,7 +74,7 @@ jobs:
       - name: Authenticate with GitHub Packages
         run: |
           echo "//npm.pkg.github.com/:_authToken=\${{ secrets.GHOSTDEV_NPM_TOKEN }}" >> ~/.npmrc
-          echo "@ghostdev:registry=https://npm.pkg.github.com" >> ~/.npmrc
+          echo "@jeongeun-choi:registry=https://npm.pkg.github.com" >> ~/.npmrc
 
       - name: Run GhostDev Agent
         env:
@@ -92,6 +92,6 @@ jobs:
           GHOSTDEV_TARGET_WORKSPACE: \${{ inputs.target_workspace }}
           # GitHub Actions 기본 제공 토큰 (PR 생성에 사용)
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
-        run: npx @ghostdev/agent@latest
+        run: npx @jeongeun-choi/agent@latest
 `;
 }

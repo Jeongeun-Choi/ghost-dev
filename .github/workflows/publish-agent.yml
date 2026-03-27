@@ -28,6 +28,6 @@ jobs:
           npm run build
 
       - name: Publish
-        run: npm publish --workspace=packages/ghostdev-agent
+        run: cd packages/ghostdev-agent && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

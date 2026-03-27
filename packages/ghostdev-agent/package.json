@@ -1,5 +1,5 @@
 {
-  "name": "@ghostdev/agent",
+  "name": "@jeongeun-choi/agent",
   "version": "0.1.0",
   "description": "GhostDev AI agent — runs inside GitHub Actions to implement tickets",
   "type": "module",
