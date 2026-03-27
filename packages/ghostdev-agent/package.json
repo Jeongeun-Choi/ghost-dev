@@ -1,6 +1,6 @@
 {
   "name": "@jeongeun-choi/agent",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "GhostDev AI agent — runs inside GitHub Actions to implement tickets",
   "type": "module",
   "bin": {

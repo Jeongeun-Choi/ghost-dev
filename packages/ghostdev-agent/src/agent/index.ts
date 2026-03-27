@@ -9,6 +9,15 @@ const MAX_OUTER_RETRIES = 3;
 const STEP_DELAY_MS = 30_000;
 const RATE_LIMIT_RESET_BUFFER_MS = 65_000;
 
+function getRetryAfterMs(err: RetryError): number {
+  const lastError = (err as RetryError & { lastError?: { responseHeaders?: Record<string, string> } }).lastError;
+  const retryAfter = lastError?.responseHeaders?.["retry-after"];
+  if (retryAfter) {
+    return (parseInt(retryAfter, 10) + 5) * 1000;
+  }
+  return RATE_LIMIT_RESET_BUFFER_MS;
+}
+
 export async function runAgent({
   ticketTitle,
   ticketDescription,
@@ -63,7 +72,7 @@ export async function runAgent({
         await logger.info(
           `Rate limit exhausted (attempt ${attempt}/${MAX_OUTER_RETRIES}). Waiting ${RATE_LIMIT_RESET_BUFFER_MS / 1000}s for window reset...`,
         );
-        await new Promise((r) => setTimeout(r, RATE_LIMIT_RESET_BUFFER_MS));
+        await new Promise((r) => setTimeout(r, getRetryAfterMs(err)));
       } else {
         throw err;
       }
