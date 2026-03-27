@@ -1,4 +1,4 @@
-import { generateText } from "ai";
+import { generateText, type CoreMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { createTools } from "./tools/index.js";
 import { buildSystemPrompt } from "./prompts/system.js";
@@ -17,21 +17,35 @@ export async function runAgent({
 
   const tools = createTools(logger);
 
+  const messages: CoreMessage[] = [
+    {
+      role: "system",
+      content: buildSystemPrompt({ repoPath: process.cwd(), targetWorkspace }),
+      experimental_providerMetadata: {
+        anthropic: { cacheControl: { type: "ephemeral" } },
+      },
+    },
+    {
+      role: "user",
+      content: buildTicketPrompt({
+        title: ticketTitle,
+        description: ticketDescription,
+        baseBranch,
+        branchPrefix,
+      }),
+    },
+  ];
+
   const result = await generateText({
     model: anthropic("claude-sonnet-4-6"),
-    system: buildSystemPrompt({ repoPath: process.cwd(), targetWorkspace }),
-    prompt: buildTicketPrompt({
-      title: ticketTitle,
-      description: ticketDescription,
-      baseBranch,
-      branchPrefix,
-    }),
+    messages,
     tools,
     maxSteps: 50,
     onStepFinish: async (step) => {
       for (const toolCall of step.toolCalls ?? []) {
         await logger.toolCall(toolCall.toolName, toolCall.args);
       }
+      await new Promise((r) => setTimeout(r, 3000));
     },
   });
 
