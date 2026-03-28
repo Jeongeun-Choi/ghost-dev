@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     if (workflowRun.status === "completed") {
       const ticketStatus =
-        workflowRun.conclusion === "success" ? "DONE" : "TODO";
+        workflowRun.conclusion === "success" ? "DONE" : "FAILED";
       await supabase
         .from("ghostdev_tickets")
         .update({ status: ticketStatus })
