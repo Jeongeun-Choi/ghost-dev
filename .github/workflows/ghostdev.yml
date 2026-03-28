@@ -90,6 +90,8 @@ jobs:
           GHOSTDEV_CALLBACK_URL: ${{ inputs.callback_url }}
           GHOSTDEV_CALLBACK_TOKEN: ${{ inputs.callback_token }}
           GHOSTDEV_TARGET_WORKSPACE: ${{ inputs.target_workspace }}
+          GHOSTDEV_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          GHOSTDEV_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           # GitHub Actions 기본 제공 토큰 (PR 생성에 사용)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx @jeongeun-choi/agent@latest

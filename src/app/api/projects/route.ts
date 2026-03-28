@@ -91,12 +91,14 @@ export async function POST(request: NextRequest) {
         parsed.data.defaultBranch,
         parsed.data.workflowFile,
       );
-      workflowInstalled = result === "created";
+      workflowInstalled = result === "created" || result === "updated";
 
       // 에이전트 실행에 필요한 시크릿 자동 등록
       const secrets = [
         { name: "ANTHROPIC_API_KEY", value: process.env.ANTHROPIC_API_KEY! },
         { name: "GHOSTDEV_NPM_TOKEN", value: process.env.GHOSTDEV_NPM_TOKEN! },
+        { name: "SUPABASE_URL", value: process.env.NEXT_PUBLIC_SUPABASE_URL! },
+        { name: "SUPABASE_SERVICE_ROLE_KEY", value: process.env.SUPABASE_SERVICE_ROLE_KEY! },
       ].filter(
         (s) => s.value,
       );

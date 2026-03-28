@@ -4,8 +4,7 @@ import { getWorkflowTemplate } from "./workflow-template";
 type OctokitInstance = InstanceType<typeof Octokit>;
 
 /**
- * 유저 레포에 ghostdev workflow 파일이 없으면 자동으로 생성합니다.
- * 이미 존재하면 덮어쓰지 않고 'exists'를 반환합니다.
+ * 유저 레포에 ghostdev workflow 파일을 설치하거나 내용이 다를 경우 업데이트합니다.
  */
 export async function installWorkflowIfMissing(
   octokit: OctokitInstance,
@@ -13,29 +12,42 @@ export async function installWorkflowIfMissing(
   repo: string,
   branch: string,
   workflowFile: string,
-): Promise<"created" | "exists"> {
+): Promise<"created" | "updated" | "exists"> {
   const path = `.github/workflows/${workflowFile}`;
+  const template = getWorkflowTemplate();
 
-  // 파일 존재 여부 확인
+  // 기존 파일 조회
+  let existingSha: string | undefined;
+  let existingContent: string | undefined;
   try {
-    await octokit.repos.getContent({ owner, repo, path });
-    return "exists";
+    const { data } = await octokit.repos.getContent({ owner, repo, path });
+    if (!Array.isArray(data) && data.type === "file") {
+      existingSha = data.sha;
+      existingContent = Buffer.from(data.content, "base64").toString("utf-8");
+    }
   } catch (err: unknown) {
     if ((err as { status?: number }).status !== 404) {
       throw err;
     }
   }
 
-  // 없으면 생성
-  const content = Buffer.from(getWorkflowTemplate()).toString("base64");
+  // 내용이 같으면 스킵
+  if (existingContent !== undefined && existingContent === template) {
+    return "exists";
+  }
+
+  const content = Buffer.from(template).toString("base64");
   await octokit.repos.createOrUpdateFileContents({
     owner,
     repo,
     path,
-    message: "chore: add GhostDev workflow",
+    message: existingSha
+      ? "chore: update GhostDev workflow"
+      : "chore: add GhostDev workflow",
     content,
     branch,
+    ...(existingSha && { sha: existingSha }),
   });
 
-  return "created";
+  return existingSha ? "updated" : "created";
 }

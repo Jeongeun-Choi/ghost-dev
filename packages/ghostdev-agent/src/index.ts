@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { runAgent } from "./agent/index.js";
-import { ConsoleLogger } from "./logger/console-logger.js";
+import { SupabaseLogger } from "./logger/supabase-logger.js";
 import type { TokenUsage } from "./types.js";
 
 async function reportTokenUsage(
@@ -43,6 +43,8 @@ async function main() {
   const targetWorkspace = process.env.GHOSTDEV_TARGET_WORKSPACE || undefined;
   const callbackUrl = process.env.GHOSTDEV_CALLBACK_URL;
   const callbackToken = process.env.GHOSTDEV_CALLBACK_TOKEN;
+  const supabaseUrl = process.env.GHOSTDEV_SUPABASE_URL;
+  const supabaseServiceKey = process.env.GHOSTDEV_SUPABASE_SERVICE_KEY;
 
   // 필수 환경변수 검증
   const missing = [
@@ -51,6 +53,8 @@ async function main() {
     !ticketTitle && "GHOSTDEV_TICKET_TITLE",
     !callbackUrl && "GHOSTDEV_CALLBACK_URL",
     !callbackToken && "GHOSTDEV_CALLBACK_TOKEN",
+    !supabaseUrl && "GHOSTDEV_SUPABASE_URL",
+    !supabaseServiceKey && "GHOSTDEV_SUPABASE_SERVICE_KEY",
     !process.env.ANTHROPIC_API_KEY && "ANTHROPIC_API_KEY",
     !process.env.GITHUB_TOKEN && "GITHUB_TOKEN",
     !process.env.GITHUB_REPOSITORY && "GITHUB_REPOSITORY",
@@ -61,7 +65,7 @@ async function main() {
     process.exit(1);
   }
 
-  const logger = new ConsoleLogger();
+  const logger = new SupabaseLogger(runId!, supabaseUrl!, supabaseServiceKey!);
 
   const { tokenUsage } = await runAgent({
     runId: runId!,
