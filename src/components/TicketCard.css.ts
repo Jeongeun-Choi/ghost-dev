@@ -89,15 +89,6 @@ export const cancelButton = style({
   },
 });
 
-// 우선순위 뱃지
-export const badge = style({
-  fontSize: "11px",
-  fontWeight: 700,
-  padding: "3px 8px",
-  letterSpacing: "0.08em",
-  border: "1px solid",
-});
-
 export const editButton = style({
   width: "32px",
   height: "32px",
@@ -115,6 +106,29 @@ export const editButton = style({
     borderColor: vars.color.cyan,
     color: vars.color.cyan,
   },
+});
+
+export const prLink = style({
+  fontSize: "11px",
+  fontWeight: 700,
+  color: vars.color.green,
+  border: `1px solid ${vars.color.green}`,
+  padding: "3px 8px",
+  textDecoration: "none",
+  letterSpacing: "0.06em",
+  transition: "opacity 0.15s",
+  ":hover": {
+    opacity: 0.75,
+  },
+});
+
+// 우선순위 뱃지
+export const badge = style({
+  fontSize: "11px",
+  fontWeight: 700,
+  padding: "3px 8px",
+  letterSpacing: "0.08em",
+  border: "1px solid",
 });
 
 export const badgeVariants = styleVariants({
