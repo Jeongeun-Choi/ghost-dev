@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createOctokit, getGitHubToken } from "@/lib/octokit";
+import { installWorkflowIfMissing } from "@/lib/github-actions/install-workflow";
+import { installRepoSecrets } from "@/lib/github-actions/install-secrets";
 import type { Ticket, Project, AgentRun } from "@/types";
 
 interface Params {
@@ -105,6 +107,39 @@ export async function POST(_request: NextRequest, { params }: Params) {
     // 2. workflow_dispatch 트리거 — provider_token은 저장 안 함
     const octokit = createOctokit(token);
     const dispatchRef = ticket.base_branch ?? project.default_branch;
+
+    // 에이전트 실행에 필요한 시크릿 최신 상태 유지
+    try {
+      const secrets = [
+        { name: "ANTHROPIC_API_KEY", value: process.env.ANTHROPIC_API_KEY! },
+        { name: "GHOSTDEV_NPM_TOKEN", value: process.env.GHOSTDEV_NPM_TOKEN! },
+        { name: "SUPABASE_URL", value: process.env.NEXT_PUBLIC_SUPABASE_URL! },
+        { name: "SUPABASE_SERVICE_ROLE_KEY", value: process.env.SUPABASE_SERVICE_KEY! },
+      ].filter((s) => s.value);
+      if (secrets.length > 0) {
+        await installRepoSecrets(octokit, project.repo_owner, project.repo_name, secrets);
+      }
+    } catch (err) {
+      console.error("시크릿 업데이트 실패 (런은 계속 진행):", err);
+    }
+
+    // 워크플로 파일이 없거나 내용이 다르면 최신으로 업데이트
+    try {
+      const workflowResult = await installWorkflowIfMissing(
+        octokit,
+        project.repo_owner,
+        project.repo_name,
+        dispatchRef,
+        project.workflow_file,
+      );
+      // 방금 생성/수정된 경우 GitHub이 워크플로를 인덱싱할 시간을 줌
+      if (workflowResult !== "exists") {
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    } catch (err) {
+      console.error("workflow 파일 업데이트 실패 (런은 계속 진행):", err);
+    }
+
     await octokit.actions.createWorkflowDispatch({
       owner: project.repo_owner,
       repo: project.repo_name,

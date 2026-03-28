@@ -26,6 +26,28 @@ async function reportTokenUsage(
   }
 }
 
+async function reportError(
+  callbackUrl: string,
+  callbackToken: string,
+  error: unknown,
+): Promise<void> {
+  const message = error instanceof Error ? error.message : String(error);
+  const response = await fetch(`${callbackUrl}/error`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${callbackToken}`,
+    },
+    body: JSON.stringify({ error: message }),
+  });
+
+  if (!response.ok) {
+    console.error(
+      `에러 콜백 API 응답 실패: ${response.status} ${response.statusText}`,
+    );
+  }
+}
+
 async function main() {
   // GitHub Actions에서 pnpm --filter 실행 시 cwd가 패키지 디렉토리로 바뀌므로
   // GITHUB_WORKSPACE로 레포 루트로 이동
@@ -67,16 +89,28 @@ async function main() {
 
   const logger = new SupabaseLogger(runId!, supabaseUrl!, supabaseServiceKey!);
 
-  const { tokenUsage } = await runAgent({
-    runId: runId!,
-    ticketId: ticketId!,
-    ticketTitle: ticketTitle!,
-    ticketDescription,
-    baseBranch,
-    branchPrefix,
-    targetWorkspace,
-    logger,
-  });
+  let tokenUsage;
+  try {
+    ({ tokenUsage } = await runAgent({
+      runId: runId!,
+      ticketId: ticketId!,
+      ticketTitle: ticketTitle!,
+      ticketDescription,
+      baseBranch,
+      branchPrefix,
+      targetWorkspace,
+      logger,
+    }));
+  } catch (err) {
+    console.error("Agent 실행 중 오류 발생:", err);
+    try {
+      await reportError(callbackUrl!, callbackToken!, err);
+      console.log("에러 콜백 전송 완료.");
+    } catch (callbackErr) {
+      console.error("에러 콜백 전송 실패:", callbackErr);
+    }
+    process.exit(1);
+  }
 
   // 콜백 API로 토큰 사용량 전송
   try {
@@ -88,6 +122,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("Agent 실행 중 오류 발생:", error);
+  console.error("예상치 못한 오류 발생:", error);
   process.exit(1);
 });

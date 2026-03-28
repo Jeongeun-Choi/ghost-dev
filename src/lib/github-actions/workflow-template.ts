@@ -9,45 +9,48 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: 'GhostDev run ID'
+        description: "GhostDev run ID"
         required: true
         type: string
       ticket_id:
-        description: 'Ticket ID'
+        description: "Ticket ID"
         required: true
         type: string
       ticket_title:
-        description: 'Ticket title'
+        description: "Ticket title"
         required: true
         type: string
       ticket_description:
-        description: 'Ticket description'
+        description: "Ticket description"
         required: false
         type: string
-        default: ''
+        default: ""
       base_branch:
-        description: 'Base branch to checkout'
+        description: "Base branch to checkout"
         required: false
         type: string
-        default: 'main'
+        default: "main"
       branch_prefix:
-        description: 'Branch prefix (feature, bugfix, chore, refactor)'
+        description: "Branch prefix (feature, bugfix, chore, refactor)"
         required: false
         type: string
-        default: 'feature'
+        default: "feature"
       callback_url:
-        description: 'GhostDev callback URL (for reporting token usage)'
+        description: "GhostDev callback URL (for reporting token usage)"
         required: true
         type: string
       callback_token:
-        description: 'One-time callback auth token'
+        description: "One-time callback auth token"
         required: true
         type: string
       target_workspace:
-        description: 'Target workspace/package path (monorepo)'
+        description: "Target workspace/package path (monorepo)"
         required: false
         type: string
-        default: ''
+        default: ""
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   ghostdev:
@@ -69,7 +72,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Authenticate with GitHub Packages
         run: |
@@ -77,6 +80,8 @@ jobs:
           echo "@jeongeun-choi:registry=https://npm.pkg.github.com" >> ~/.npmrc
 
       - name: Run GhostDev Agent
+        id: agent_run
+        continue-on-error: true
         env:
           # 유저 본인의 API 키 — GhostDev가 프로젝트 연결 시 자동 등록
           ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}
@@ -90,8 +95,19 @@ jobs:
           GHOSTDEV_CALLBACK_URL: \${{ inputs.callback_url }}
           GHOSTDEV_CALLBACK_TOKEN: \${{ inputs.callback_token }}
           GHOSTDEV_TARGET_WORKSPACE: \${{ inputs.target_workspace }}
+          GHOSTDEV_SUPABASE_URL: \${{ secrets.SUPABASE_URL }}
+          GHOSTDEV_SUPABASE_SERVICE_KEY: \${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           # GitHub Actions 기본 제공 토큰 (PR 생성에 사용)
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
         run: npx @jeongeun-choi/agent@latest
+
+      - name: Report Error to GhostDev Server
+        if: steps.agent_run.outcome == 'failure'
+        run: |
+          curl -X POST \${{ inputs.callback_url }}/error \\
+            -H "Content-Type: application/json" \\
+            -H "Authorization: Bearer \${{ inputs.callback_token }}" \\
+            -d "{\\"error\\": \\"Agent execution failed\\", \\"step_outcome\\": \\"failure\\"}"
+          exit 1
 `;
 }
