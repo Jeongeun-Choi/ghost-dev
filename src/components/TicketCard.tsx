@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import * as s from "./TicketCard.css";
 import { useTriggerRun, useCancelRun } from "@/features/runs/hooks";
+import { EditTicketModal } from "./EditTicketModal";
 import type { Ticket } from "@/types";
 
 type Priority = "CRITICAL" | "HIGH" | "NORMAL";
@@ -24,12 +26,15 @@ interface TicketCardProps {
 }
 
 export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
   const router = useRouter();
   const triggerRun = useTriggerRun(repoId);
   const cancelRun = useCancelRun(repoId);
   const priority = getPriority(ticket.priority);
 
   const isClickable = ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
+  const isEditable = ticket.status === "TODO" || ticket.status === "FAILED";
   const isCancellable = ticket.status === "QUEUED" || ticket.status === "IN_PROGRESS";
 
   const handleCardClick = () => {
@@ -55,50 +60,77 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
     cancelRun.mutate(ticket.id);
   };
 
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditOpen(true);
+  };
+
   return (
-    <div
-      className={s.card}
-      onClick={handleCardClick}
-      style={isClickable ? { cursor: "pointer" } : undefined}
-    >
-      <div className={s.cardHeader}>
-        <span className={s.ticketId}>{getTicketDisplayId(ticket.id)}</span>
-        {workspaceTag && <span className={s.workspaceTag}>{workspaceTag}</span>}
-      </div>
+    <>
+      <div
+        className={s.card}
+        onClick={handleCardClick}
+        style={isClickable ? { cursor: "pointer" } : undefined}
+      >
+        <div className={s.cardHeader}>
+          <span className={s.ticketId}>{getTicketDisplayId(ticket.id)}</span>
+          {workspaceTag && <span className={s.workspaceTag}>{workspaceTag}</span>}
+        </div>
 
-      <p className={s.title}>{ticket.title}</p>
+        <p className={s.title}>{ticket.title}</p>
 
-      <div className={s.cardFooter}>
-        <span className={`${s.badge} ${s.badgeVariants[priority]}`}>{priority}</span>
+        <div className={s.cardFooter}>
+          <span className={`${s.badge} ${s.badgeVariants[priority]}`}>{priority}</span>
 
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          {isCancellable ? (
-            <button
-              className={s.cancelButton}
-              onClick={handleCancel}
-              disabled={cancelRun.isPending}
-              aria-label="실행 취소"
-              title="실행 취소"
-            >
-              {cancelRun.isPending ? "⟳" : "✕"}
-            </button>
-          ) : (
-            <button
-              className={s.playButton}
-              onClick={handleRun}
-              disabled={triggerRun.isPending}
-              title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
-              style={
-                triggerRun.isError || ticket.status === "FAILED"
-                  ? { color: "#EF4444" }
-                  : undefined
-              }
-            >
-              {triggerRun.isPending ? "⟳" : triggerRun.isError ? "✕" : ticket.status === "FAILED" ? "⟳" : "▶"}
-            </button>
-          )}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {isCancellable ? (
+              <button
+                className={s.cancelButton}
+                onClick={handleCancel}
+                disabled={cancelRun.isPending}
+                aria-label="실행 취소"
+                title="실행 취소"
+              >
+                {cancelRun.isPending ? "⟳" : "✕"}
+              </button>
+            ) : (
+              <>
+                {isEditable && (
+                  <button
+                    className={s.editButton}
+                    onClick={handleEditClick}
+                    aria-label="티켓 편집"
+                    title="편집"
+                  >
+                    ✎
+                  </button>
+                )}
+                <button
+                  className={s.playButton}
+                  onClick={handleRun}
+                  disabled={triggerRun.isPending}
+                  title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
+                  style={
+                    triggerRun.isError || ticket.status === "FAILED"
+                      ? { color: "#EF4444" }
+                      : undefined
+                  }
+                >
+                  {triggerRun.isPending ? "⟳" : triggerRun.isError ? "✕" : ticket.status === "FAILED" ? "⟳" : "▶"}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {isEditOpen && (
+        <EditTicketModal
+          ticket={ticket}
+          repoId={repoId}
+          onClose={() => setIsEditOpen(false)}
+        />
+      )}
+    </>
   );
 }

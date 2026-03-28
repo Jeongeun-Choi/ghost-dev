@@ -37,6 +37,9 @@ export async function updateTicket(
     title?: string;
     description?: string;
     priority?: number;
+    base_branch?: string;
+    branch_prefix?: string;
+    target_workspace?: string | null;
   },
 ) {
   const res = await fetch(`/api/tickets/${ticketId}`, {

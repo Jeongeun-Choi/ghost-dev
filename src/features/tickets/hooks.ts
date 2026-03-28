@@ -36,7 +36,15 @@ export function useUpdateTicket(repoId: string) {
       data,
     }: {
       ticketId: string;
-      data: { status?: TicketStatus; priority?: number };
+      data: {
+        status?: TicketStatus;
+        title?: string;
+        description?: string;
+        priority?: number;
+        base_branch?: string;
+        branch_prefix?: string;
+        target_workspace?: string | null;
+      };
     }) => updateTicket(ticketId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.lists(repoId) });
