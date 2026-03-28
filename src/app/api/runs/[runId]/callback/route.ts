@@ -11,6 +11,8 @@ const callbackSchema = z.object({
   promptTokens: z.number().int().nonnegative(),
   completionTokens: z.number().int().nonnegative(),
   totalTokens: z.number().int().nonnegative(),
+  prUrl: z.string().url().optional(),
+  prNumber: z.number().int().positive().optional(),
 });
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -50,9 +52,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     .eq("id", runId);
 
   if (run.ticket_id) {
+    const ticketUpdate: { status: string; pr_url?: string; pr_number?: number } = { status: "DONE" };
+    if (parsed.data.prUrl) ticketUpdate.pr_url = parsed.data.prUrl;
+    if (parsed.data.prNumber) ticketUpdate.pr_number = parsed.data.prNumber;
     await supabase
       .from("ghostdev_tickets")
-      .update({ status: "DONE" })
+      .update(ticketUpdate)
       .eq("id", run.ticket_id);
   }
 

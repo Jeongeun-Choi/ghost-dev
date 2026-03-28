@@ -83,6 +83,19 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
           <span className={`${s.badge} ${s.badgeVariants[priority]}`}>{priority}</span>
 
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {ticket.status === "DONE" && ticket.pr_url && (
+              <a
+                href={ticket.pr_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={s.prLink}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="PR 보기"
+              >
+                PR↗
+              </a>
+            )}
+
             {isCancellable ? (
               <button
                 className={s.cancelButton}

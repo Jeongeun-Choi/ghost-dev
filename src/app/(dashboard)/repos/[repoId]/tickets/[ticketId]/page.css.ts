@@ -78,6 +78,21 @@ export const statusBadge = styleVariants({
   },
 });
 
+export const prLink = style({
+  fontSize: "12px",
+  fontWeight: 700,
+  color: vars.color.green,
+  border: `1px solid ${vars.color.green}`,
+  padding: `${vars.space.xs} ${vars.space.sm}`,
+  textDecoration: "none",
+  letterSpacing: "0.08em",
+  alignSelf: "flex-start",
+  transition: "opacity 0.15s",
+  ":hover": {
+    opacity: 0.75,
+  },
+});
+
 export const logWrapper = style({
   flex: 1,
   overflow: "hidden",
