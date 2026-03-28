@@ -27,6 +27,21 @@ export function useTriggerRun(repoId: string) {
   });
 }
 
+export function useCancelRun(repoId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const res = await fetch(`/api/tickets/${ticketId}/cancel`, { method: "POST" });
+      if (!res.ok) throw new Error("취소에 실패했습니다.");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["runs", repoId] });
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    },
+  });
+}
+
 // Supabase Realtime을 통해 run_logs를 실시간으로 구독
 export function useRunLogs(runId: string) {
   const [logs, setLogs] = useState<RunLog[]>([]);

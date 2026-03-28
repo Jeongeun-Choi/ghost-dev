@@ -67,6 +67,28 @@ export const playButton = style({
   },
 });
 
+export const cancelButton = style({
+  width: "40px",
+  height: "40px",
+  backgroundColor: "transparent",
+  border: `1px solid ${vars.color.red}`,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: vars.color.red,
+  fontSize: "14px",
+  cursor: "pointer",
+  flexShrink: 0,
+  transition: "opacity 0.15s",
+  ":hover": {
+    opacity: 0.75,
+  },
+  ":disabled": {
+    opacity: 0.5,
+    cursor: "not-allowed",
+  },
+});
+
 // 우선순위 뱃지
 export const badge = style({
   fontSize: "11px",

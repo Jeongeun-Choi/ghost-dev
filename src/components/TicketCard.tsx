@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as s from "./TicketCard.css";
-import { useTriggerRun } from "@/features/runs/hooks";
+import { useTriggerRun, useCancelRun } from "@/features/runs/hooks";
 import type { Ticket } from "@/types";
 
 type Priority = "CRITICAL" | "HIGH" | "NORMAL";
@@ -26,9 +26,11 @@ interface TicketCardProps {
 export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
   const router = useRouter();
   const triggerRun = useTriggerRun(repoId);
+  const cancelRun = useCancelRun(repoId);
   const priority = getPriority(ticket.priority);
 
   const isClickable = ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
+  const isCancellable = ticket.status === "QUEUED" || ticket.status === "IN_PROGRESS";
 
   const handleCardClick = () => {
     if (isClickable) {
@@ -48,6 +50,11 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
     });
   };
 
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    cancelRun.mutate(ticket.id);
+  };
+
   return (
     <div
       className={s.card}
@@ -64,19 +71,33 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
       <div className={s.cardFooter}>
         <span className={`${s.badge} ${s.badgeVariants[priority]}`}>{priority}</span>
 
-        <button
-          className={s.playButton}
-          onClick={handleRun}
-          disabled={triggerRun.isPending}
-          title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
-          style={
-            triggerRun.isError || ticket.status === "FAILED"
-              ? { color: "#EF4444" }
-              : undefined
-          }
-        >
-          {triggerRun.isPending ? "⟳" : triggerRun.isError ? "✕" : ticket.status === "FAILED" ? "⟳" : "▶"}
-        </button>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          {isCancellable ? (
+            <button
+              className={s.cancelButton}
+              onClick={handleCancel}
+              disabled={cancelRun.isPending}
+              aria-label="실행 취소"
+              title="실행 취소"
+            >
+              {cancelRun.isPending ? "⟳" : "✕"}
+            </button>
+          ) : (
+            <button
+              className={s.playButton}
+              onClick={handleRun}
+              disabled={triggerRun.isPending}
+              title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
+              style={
+                triggerRun.isError || ticket.status === "FAILED"
+                  ? { color: "#EF4444" }
+                  : undefined
+              }
+            >
+              {triggerRun.isPending ? "⟳" : triggerRun.isError ? "✕" : ticket.status === "FAILED" ? "⟳" : "▶"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
