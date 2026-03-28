@@ -9,21 +9,21 @@ import * as s from "./WorkspaceFilteredBoard.css";
 
 interface Props {
   initialTickets: Ticket[];
-  projectId: string;
+  repoId: string;
   workspaceConfig: WorkspaceConfig | null;
   defaultBranch: string;
 }
 
 export function WorkspaceFilteredBoard({
   initialTickets,
-  projectId,
+  repoId,
   workspaceConfig,
   defaultBranch,
 }: Props) {
   const [activeWorkspace, setActiveWorkspace] = useState<string>("ALL");
 
   const { data: tickets = initialTickets } = useTickets(
-    projectId,
+    repoId,
     initialTickets,
   );
 
@@ -65,7 +65,7 @@ export function WorkspaceFilteredBoard({
           </div>
           <div style={{ paddingBottom: "1px" }}>
             <InitTaskButton
-              projectId={projectId}
+              repoId={repoId}
               defaultBranch={defaultBranch}
               workspaceConfig={workspaceConfig}
               activeWorkspace={
@@ -79,7 +79,7 @@ export function WorkspaceFilteredBoard({
       <div className={s.boardWrapper}>
         <KanbanBoard
           tickets={filteredTickets}
-          projectId={projectId}
+          repoId={repoId}
           workspaceConfig={workspaceConfig}
         />
       </div>

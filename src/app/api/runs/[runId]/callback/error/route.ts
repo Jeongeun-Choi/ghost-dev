@@ -34,7 +34,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // 3. AgentRun 정보 로드 (ticket 연관관계 포함)
   const { data: run, error: runError } = await supabase
     .from("ghostdev_agent_runs")
-    .select("*, ghostdev_tickets!inner(*, ghostdev_projects!inner(*))")
+    .select("*, ghostdev_tickets!inner(*, ghostdev_repos!inner(*))")
     .eq("id", runId)
     .single();
 

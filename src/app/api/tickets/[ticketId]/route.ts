@@ -15,12 +15,12 @@ const updateTicketSchema = z.object({
 
 async function verifyTicketOwnership(ticketId: string, userId: string) {
   const supabase = await createClient();
-  // ghostdev_tickets → ghostdev_projects → user_id 소유권 확인
+  // ghostdev_tickets → ghostdev_repos → user_id 소유권 확인
   const { data } = await supabase
     .from("ghostdev_tickets")
-    .select("id, ghostdev_projects!inner(user_id)")
+    .select("id, ghostdev_repos!inner(user_id)")
     .eq("id", ticketId)
-    .eq("ghostdev_projects.user_id", userId)
+    .eq("ghostdev_repos.user_id", userId)
     .single();
   return data;
 }

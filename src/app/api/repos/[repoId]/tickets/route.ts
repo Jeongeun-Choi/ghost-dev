@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 interface Params {
-  params: Promise<{ projectId: string }>;
+  params: Promise<{ repoId: string }>;
 }
 
 export async function GET(_request: NextRequest, { params }: Params) {
-  const { projectId } = await params;
+  const { repoId } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,22 +16,22 @@ export async function GET(_request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 프로젝트 소유권 확인
-  const { data: project } = await supabase
-    .from("ghostdev_projects")
+  // 레포 소유권 확인
+  const { data: repo } = await supabase
+    .from("ghostdev_repos")
     .select("id")
-    .eq("id", projectId)
+    .eq("id", repoId)
     .eq("user_id", user.id)
     .single();
 
-  if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  if (!repo) {
+    return NextResponse.json({ error: "Repo not found" }, { status: 404 });
   }
 
   const { data } = await supabase
     .from("ghostdev_tickets")
     .select("*")
-    .eq("project_id", projectId)
+    .eq("repo_id", repoId)
     .order("priority");
 
   return NextResponse.json(data ?? []);

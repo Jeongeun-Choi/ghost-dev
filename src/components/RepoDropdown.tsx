@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import type { WorkspaceConfig } from "@/types";
-import { useGitHubRepos } from "@/features/projects/hooks";
-import { fetchMonorepoConfig } from "@/features/projects/queries";
+import { useGitHubRepos } from "@/features/repos/hooks";
+import { fetchMonorepoConfig } from "@/features/repos/queries";
 import * as s from "./RepoDropdown.css";
 
 interface GitHubRepo {

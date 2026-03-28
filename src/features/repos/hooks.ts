@@ -2,17 +2,17 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  projectKeys,
-  fetchProjects,
-  createProject,
-  deleteProject,
+  repoKeys,
+  fetchRepos,
+  createRepo,
+  deleteRepo,
   fetchGitHubRepos,
 } from "./queries";
 
-export function useProjects() {
+export function useRepos() {
   return useQuery({
-    queryKey: projectKeys.lists(),
-    queryFn: fetchProjects,
+    queryKey: repoKeys.lists(),
+    queryFn: fetchRepos,
   });
 }
 
@@ -23,22 +23,22 @@ export function useGitHubRepos() {
   });
 }
 
-export function useCreateProject() {
+export function useCreateRepo() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: createProject,
+    mutationFn: createRepo,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: repoKeys.lists() });
     },
   });
 }
 
-export function useDeleteProject() {
+export function useDeleteRepo() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteProject,
+    mutationFn: deleteRepo,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: repoKeys.lists() });
     },
   });
 }

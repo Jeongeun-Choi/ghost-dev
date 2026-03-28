@@ -5,7 +5,7 @@ import { createOctokit, getGitHubToken } from "@/lib/octokit";
 import { installWorkflowIfMissing } from "@/lib/github-actions/install-workflow";
 import { installRepoSecrets } from "@/lib/github-actions/install-secrets";
 
-const createProjectSchema = z.object({
+const createRepoSchema = z.object({
   repoOwner: z.string().min(1),
   repoName: z.string().min(1),
   repoFullName: z.string().min(1),
@@ -28,7 +28,7 @@ export async function GET() {
   }
 
   const { data } = await supabase
-    .from("ghostdev_projects")
+    .from("ghostdev_repos")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at");
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const parsed = createProjectSchema.safeParse(body);
+  const parsed = createRepoSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid request", details: parsed.error.flatten() },
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data: created, error: insertError } = await supabase
-    .from("ghostdev_projects")
+    .from("ghostdev_repos")
     .insert({
       user_id: session.user.id,
       repo_owner: parsed.data.repoOwner,
@@ -72,12 +72,12 @@ export async function POST(request: NextRequest) {
     .single();
   if (insertError || !created) {
     return NextResponse.json(
-      { error: "프로젝트 저장에 실패했습니다.", details: insertError?.message },
+      { error: "레포 저장에 실패했습니다.", details: insertError?.message },
       { status: 500 },
     );
   }
 
-  // workflow 파일 + 시크릿 자동 설치 (실패해도 project 생성은 유지)
+  // workflow 파일 + 시크릿 자동 설치 (실패해도 repo 생성은 유지)
   let workflowInstalled: boolean | null = null;
   let secretsInstalled: boolean | null = null;
   try {

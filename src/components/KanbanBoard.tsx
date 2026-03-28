@@ -13,11 +13,11 @@ const COLUMNS: { status: TicketStatus; label: string }[] = [
 
 interface KanbanBoardProps {
   tickets: Ticket[];
-  projectId: string;
+  repoId: string;
   workspaceConfig?: WorkspaceConfig | null;
 }
 
-export function KanbanBoard({ tickets, projectId, workspaceConfig }: KanbanBoardProps) {
+export function KanbanBoard({ tickets, repoId, workspaceConfig }: KanbanBoardProps) {
   const resolveWorkspaceTag = (targetWorkspace: string | null): string | undefined => {
     if (!targetWorkspace || !workspaceConfig) return undefined;
     const pkg = workspaceConfig.packages.find((p) => p.path === targetWorkspace);
@@ -43,7 +43,7 @@ export function KanbanBoard({ tickets, projectId, workspaceConfig }: KanbanBoard
                   <TicketCard
                     key={ticket.id}
                     ticket={ticket}
-                    projectId={projectId}
+                    repoId={repoId}
                     workspaceTag={resolveWorkspaceTag(ticket.target_workspace)}
                   />
                 ))

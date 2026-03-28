@@ -3,14 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createOctokit, getGitHubToken } from "@/lib/octokit";
 import { installWorkflowIfMissing } from "@/lib/github-actions/install-workflow";
 import { installRepoSecrets } from "@/lib/github-actions/install-secrets";
-import type { Ticket, Project, AgentRun } from "@/types";
+import type { Ticket, Repo, AgentRun } from "@/types";
 
 interface Params {
   params: Promise<{ ticketId: string }>;
 }
 
-interface TicketWithProject extends Ticket {
-  ghostdev_projects: Project;
+interface TicketWithRepo extends Ticket {
+  ghostdev_repos: Repo;
 }
 
 interface DispatchInputs {
@@ -57,19 +57,19 @@ export async function POST(_request: NextRequest, { params }: Params) {
     );
   }
 
-  // 티켓 + 프로젝트 정보 조회 (소유권 확인 포함)
+  // 티켓 + 레포 정보 조회 (소유권 확인 포함)
   const { data: ticket } = await supabase
     .from("ghostdev_tickets")
-    .select("*, ghostdev_projects!inner(*)")
+    .select("*, ghostdev_repos!inner(*)")
     .eq("id", ticketId)
-    .eq("ghostdev_projects.user_id", user.id)
-    .single<TicketWithProject>();
+    .eq("ghostdev_repos.user_id", user.id)
+    .single<TicketWithRepo>();
 
   if (!ticket) {
     return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
   }
 
-  const project = ticket.ghostdev_projects;
+  const project = ticket.ghostdev_repos;
 
   // 1. agent_runs 레코드 생성 — runId + callbackToken이 에이전트와의 correlation key
   const callbackToken = crypto.randomUUID();

@@ -5,8 +5,8 @@ import Image from "next/image";
 import * as s from "./TopNav.css";
 import { RepoDropdown } from "./RepoDropdown";
 import { SignOutButton } from "./SignOutButton";
-import { useProjects, useCreateProject } from "@/features/projects/hooks";
-import type { Project } from "@/types";
+import { useRepos, useCreateRepo } from "@/features/repos/hooks";
+import type { Repo } from "@/types";
 
 interface TopNavProps {
   userLogin?: string;
@@ -15,8 +15,8 @@ interface TopNavProps {
 
 export function TopNav({ userLogin, userAvatar }: TopNavProps) {
   const router = useRouter();
-  const { data: projects = [] } = useProjects();
-  const createProject = useCreateProject();
+  const { data: repos = [] } = useRepos();
+  const createRepo = useCreateRepo();
 
   const handleRepoSelect = async (repo: {
     owner: string;
@@ -28,13 +28,13 @@ export function TopNav({ userLogin, userAvatar }: TopNavProps) {
     description: string | null;
     workspaceConfig: unknown;
   }) => {
-    const existingProject = projects.find((p: Project) => p.repo_node_id === repo.id);
-    if (existingProject) {
-      router.push(`/projects/${existingProject.id}`);
+    const existingRepo = repos.find((r: Repo) => r.repo_node_id === repo.id);
+    if (existingRepo) {
+      router.push(`/repos/${existingRepo.id}`);
       return;
     }
 
-    const result = await createProject.mutateAsync({
+    const result = await createRepo.mutateAsync({
       repoOwner: repo.owner,
       repoName: repo.name,
       repoFullName: repo.fullName,
@@ -52,7 +52,7 @@ export function TopNav({ userLogin, userAvatar }: TopNavProps) {
       );
     }
 
-    router.push(`/projects/${result.id}`);
+    router.push(`/repos/${result.id}`);
   };
 
   return (

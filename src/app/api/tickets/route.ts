@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 const createTicketSchema = z.object({
-  projectId: z.string().uuid(),
+  repoId: z.string().uuid(),
   title: z.string().min(1),
   description: z.string().optional(),
   baseBranch: z.string().optional(),
@@ -33,22 +33,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 프로젝트 소유권 확인
-  const { data: project } = await supabase
-    .from("ghostdev_projects")
+  // 레포 소유권 확인
+  const { data: repo } = await supabase
+    .from("ghostdev_repos")
     .select("id")
-    .eq("id", parsed.data.projectId)
+    .eq("id", parsed.data.repoId)
     .eq("user_id", user.id)
     .single();
 
-  if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  if (!repo) {
+    return NextResponse.json({ error: "Repo not found" }, { status: 404 });
   }
 
   const { data: created } = await supabase
     .from("ghostdev_tickets")
     .insert({
-      project_id: parsed.data.projectId,
+      repo_id: parsed.data.repoId,
       title: parsed.data.title,
       description: parsed.data.description ?? null,
       branch_prefix: parsed.data.branchPrefix ?? null,

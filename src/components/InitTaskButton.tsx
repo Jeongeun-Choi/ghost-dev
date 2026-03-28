@@ -6,14 +6,14 @@ import { CreateTicketModal } from "./CreateTicketModal";
 import * as s from "./InitTaskButton.css";
 
 interface Props {
-  projectId: string;
+  repoId: string;
   defaultBranch: string;
   workspaceConfig?: WorkspaceConfig | null;
   activeWorkspace?: string | null;
 }
 
 export function InitTaskButton({
-  projectId,
+  repoId,
   defaultBranch,
   workspaceConfig,
   activeWorkspace,
@@ -27,7 +27,7 @@ export function InitTaskButton({
       </button>
       {isOpen && (
         <CreateTicketModal
-          projectId={projectId}
+          repoId={repoId}
           defaultBranch={defaultBranch}
           workspaceConfig={workspaceConfig}
           defaultWorkspace={activeWorkspace}
