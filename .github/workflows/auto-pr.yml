@@ -3,8 +3,6 @@ name: Auto Pull Request
 on:
   push:
     branches:
-      - "feature/pin-plate/**"
-      - "feature/ghost-dev/**"
       - "feature/*"
       - "bugfix/*"
       - "refactor/*"
