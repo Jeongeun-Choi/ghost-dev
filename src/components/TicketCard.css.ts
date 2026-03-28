@@ -98,6 +98,25 @@ export const badge = style({
   border: "1px solid",
 });
 
+export const editButton = style({
+  width: "32px",
+  height: "32px",
+  backgroundColor: "transparent",
+  border: `1px solid ${vars.color.cardBorder}`,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: vars.color.textDim,
+  fontSize: "14px",
+  cursor: "pointer",
+  flexShrink: 0,
+  transition: "all 0.15s",
+  ":hover": {
+    borderColor: vars.color.cyan,
+    color: vars.color.cyan,
+  },
+});
+
 export const badgeVariants = styleVariants({
   CRITICAL: {
     color: vars.color.red,

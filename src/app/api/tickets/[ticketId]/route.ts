@@ -9,8 +9,11 @@ interface Params {
 const updateTicketSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
+  status: z.enum(["TODO", "IN_PROGRESS", "DONE", "FAILED"]).optional(),
   priority: z.number().int().optional(),
+  base_branch: z.string().optional(),
+  branch_prefix: z.string().optional(),
+  target_workspace: z.string().nullable().optional(),
 });
 
 async function verifyTicketOwnership(ticketId: string, userId: string) {
