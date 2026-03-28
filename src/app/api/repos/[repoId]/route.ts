@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 interface Params {
-  params: Promise<{ projectId: string }>;
+  params: Promise<{ repoId: string }>;
 }
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
-  const { projectId } = await params;
+  const { repoId } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -17,9 +17,9 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
   }
 
   await supabase
-    .from("ghostdev_projects")
+    .from("ghostdev_repos")
     .delete()
-    .eq("id", projectId)
+    .eq("id", repoId)
     .eq("user_id", user.id);
 
   return new NextResponse(null, { status: 204 });

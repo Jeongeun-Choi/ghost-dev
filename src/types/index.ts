@@ -39,7 +39,7 @@ export interface GhostdevUser {
   updated_at: string;
 }
 
-export interface Project {
+export interface Repo {
   id: string;
   user_id: string;
   repo_owner: string;
@@ -57,7 +57,7 @@ export interface Project {
 
 export interface Ticket {
   id: string;
-  project_id: string;
+  repo_id: string;
   title: string;
   description: string | null;
   status: TicketStatus;

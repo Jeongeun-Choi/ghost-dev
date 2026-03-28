@@ -22,7 +22,7 @@ const PRIORITY_MAP: Record<Priority, number> = {
 };
 
 interface Props {
-  projectId: string;
+  repoId: string;
   defaultBranch: string;
   onClose: () => void;
   workspaceConfig?: WorkspaceConfig | null;
@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function CreateTicketModal({
-  projectId,
+  repoId,
   defaultBranch,
   onClose,
   defaultWorkspace,
@@ -46,7 +46,7 @@ export function CreateTicketModal({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { mutateAsync: submitTicket, isPending: isSubmitting } =
-    useCreateTicket(projectId);
+    useCreateTicket(repoId);
 
   const branchPreview = useMemo(
     () => `${selectedPrefix.toLowerCase()}/${branchSlug}`,
@@ -92,7 +92,7 @@ export function CreateTicketModal({
 
       try {
         await submitTicket({
-          projectId,
+          repoId,
           title: ticketTitle,
           description: directives.trim(),
           baseBranch: defaultBranch,
@@ -109,7 +109,7 @@ export function CreateTicketModal({
     [
       directives,
       branchSlug,
-      projectId,
+      repoId,
       defaultBranch,
       defaultWorkspace,
       selectedPriority,

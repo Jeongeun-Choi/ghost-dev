@@ -2,18 +2,18 @@ import type { TicketStatus } from "@/types";
 
 export const ticketKeys = {
   all: ["tickets"] as const,
-  lists: (projectId: string) => [...ticketKeys.all, "list", projectId] as const,
+  lists: (repoId: string) => [...ticketKeys.all, "list", repoId] as const,
   detail: (id: string) => [...ticketKeys.all, "detail", id] as const,
 };
 
-export async function fetchTickets(projectId: string) {
-  const res = await fetch(`/api/projects/${projectId}/tickets`);
+export async function fetchTickets(repoId: string) {
+  const res = await fetch(`/api/repos/${repoId}/tickets`);
   if (!res.ok) throw new Error("티켓 목록을 불러오지 못했습니다.");
   return res.json();
 }
 
 export async function createTicket(data: {
-  projectId: string;
+  repoId: string;
   title: string;
   description?: string;
   baseBranch?: string;

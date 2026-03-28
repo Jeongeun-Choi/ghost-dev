@@ -126,3 +126,40 @@ export const emptyState = style({
   fontSize: "14px",
   letterSpacing: "0.1em",
 });
+
+export const activateButton = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.xs,
+  padding: `${vars.space.xs} ${vars.space.sm}`,
+  backgroundColor: "transparent",
+  border: `1px solid ${vars.color.textDim}`,
+  color: vars.color.textDim,
+  fontSize: "11px",
+  fontWeight: 700,
+  letterSpacing: "0.1em",
+  cursor: "pointer",
+  transition: "border-color 0.15s, color 0.15s",
+  ":hover": {
+    borderColor: vars.color.cyan,
+    color: vars.color.cyan,
+  },
+  ":disabled": {
+    opacity: 0.5,
+    cursor: "not-allowed",
+  },
+});
+
+export const activatedBadge = style({
+  fontSize: "10px",
+  color: vars.color.cyan,
+  letterSpacing: "0.08em",
+  marginLeft: "auto",
+});
+
+export const privateBadge = style({
+  fontSize: "10px",
+  color: vars.color.textDim,
+  letterSpacing: "0.08em",
+  opacity: 0.6,
+});

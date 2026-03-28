@@ -2,38 +2,38 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WorkspaceFilteredBoard } from "@/components/WorkspaceFilteredBoard";
 import { InitTaskButton } from "@/components/InitTaskButton";
-import type { Project, Ticket } from "@/types";
+import type { Repo, Ticket } from "@/types";
 import * as s from "./page.css";
 
 interface Props {
-  params: Promise<{ projectId: string }>;
+  params: Promise<{ repoId: string }>;
 }
 
-export default async function ProjectPage({ params }: Props) {
-  const { projectId } = await params;
+export default async function RepoPage({ params }: Props) {
+  const { repoId } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: projectData } = await supabase
-    .from("ghostdev_projects")
+  const { data: repoData } = await supabase
+    .from("ghostdev_repos")
     .select("*")
-    .eq("id", projectId)
+    .eq("id", repoId)
     .eq("user_id", user!.id)
     .single();
 
-  if (!projectData) notFound();
+  if (!repoData) notFound();
 
-  const project = projectData as Project;
+  const repo = repoData as Repo;
 
-  const { data: projectTickets } = await supabase
+  const { data: repoTickets } = await supabase
     .from("ghostdev_tickets")
     .select("*")
-    .eq("project_id", projectId)
+    .eq("repo_id", repoId)
     .order("priority");
 
-  const isMonorepo = !!project.workspace_config;
+  const isMonorepo = !!repo.workspace_config;
 
   return (
     <div className={s.pageWrapper}>
@@ -41,26 +41,26 @@ export default async function ProjectPage({ params }: Props) {
         <div>
           <div className={s.breadcrumb}>
             <span>⎇</span>
-            <span>NODE: {project.repo_full_name}</span>
+            <span>NODE: {repo.repo_full_name}</span>
             {isMonorepo && (
               <span className={s.monorepoBadge}>{"// MONOREPO"}</span>
             )}
           </div>
-          <h1 className={s.pageTitle}>{project.name}</h1>
+          <h1 className={s.pageTitle}>{repo.name}</h1>
         </div>
         {!isMonorepo && (
           <InitTaskButton
-            projectId={projectId}
-            defaultBranch={project.default_branch}
+            repoId={repoId}
+            defaultBranch={repo.default_branch}
           />
         )}
       </div>
 
       <WorkspaceFilteredBoard
-        initialTickets={(projectTickets ?? []) as Ticket[]}
-        projectId={projectId}
-        workspaceConfig={project.workspace_config}
-        defaultBranch={project.default_branch}
+        initialTickets={(repoTickets ?? []) as Ticket[]}
+        repoId={repoId}
+        workspaceConfig={repo.workspace_config}
+        defaultBranch={repo.default_branch}
       />
     </div>
   );

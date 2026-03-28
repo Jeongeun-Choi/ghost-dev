@@ -5,7 +5,7 @@ import type { TicketStatus } from "@/types";
 import * as s from "./page.css";
 
 interface Props {
-  params: Promise<{ projectId: string; ticketId: string }>;
+  params: Promise<{ repoId: string; ticketId: string }>;
 }
 
 export default async function TicketPage({ params }: Props) {

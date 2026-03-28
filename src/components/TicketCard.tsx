@@ -19,20 +19,20 @@ function getTicketDisplayId(id: string) {
 
 interface TicketCardProps {
   ticket: Ticket;
-  projectId: string;
+  repoId: string;
   workspaceTag?: string;
 }
 
-export function TicketCard({ ticket, projectId, workspaceTag }: TicketCardProps) {
+export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
   const router = useRouter();
-  const triggerRun = useTriggerRun(projectId);
+  const triggerRun = useTriggerRun(repoId);
   const priority = getPriority(ticket.priority);
 
   const isClickable = ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
 
   const handleCardClick = () => {
     if (isClickable) {
-      router.push(`/projects/${projectId}/tickets/${ticket.id}`);
+      router.push(`/repos/${repoId}/tickets/${ticket.id}`);
     }
   };
 
@@ -40,7 +40,7 @@ export function TicketCard({ ticket, projectId, workspaceTag }: TicketCardProps)
     e.stopPropagation();
     triggerRun.mutate(ticket.id, {
       onSuccess: () => {
-        router.push(`/projects/${projectId}/tickets/${ticket.id}`);
+        router.push(`/repos/${repoId}/tickets/${ticket.id}`);
       },
       onError: (error) => {
         alert(error.message);

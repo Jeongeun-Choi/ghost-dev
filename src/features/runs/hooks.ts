@@ -10,7 +10,7 @@ export const runKeys = {
 };
 
 // workflow_dispatch를 트리거하고 runId를 반환
-export function useTriggerRun(projectId: string) {
+export function useTriggerRun(repoId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (ticketId: string) => {
@@ -21,7 +21,7 @@ export function useTriggerRun(projectId: string) {
       return res.json() as Promise<{ runId: string }>;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["runs", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["runs", repoId] });
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
     },
   });
