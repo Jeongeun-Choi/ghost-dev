@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createOctokit } from "@/lib/octokit";
+import { decryptToken } from "@/lib/token-crypto";
 
 interface Params {
   params: Promise<{ runId: string }>;
@@ -50,39 +52,57 @@ export async function POST(request: NextRequest, { params }: Params) {
   const currentRetry = run.retry_count || 0;
 
   if (currentRetry < MAX_RETRIES) {
-    // 재시도 수행
     const newRetryCount = currentRetry + 1;
 
+    // 재시도 전 상태 업데이트
     await supabase
       .from("ghostdev_agent_runs")
       .update({ retry_count: newRetryCount, status: "QUEUED" })
       .eq("id", runId);
 
-    // 저장되었던 dispatch inputs로 재트리거
+    // 저장된 dispatch_inputs로 workflow_dispatch 재트리거
     if (run.dispatch_inputs) {
       try {
-        // const dispatchInputs = JSON.parse(run.dispatch_inputs);
-
-        // 주의: Provider token은 DB에 저장되지 않았으나,
-        // 깃허브 앱이나 다른 시스템 토큰을 쓴다고 가정.
-        // 서비스 단위의 Github App Token 또는 유저 토큰이 필요합니다.
-        // 현재 파일에선 트리거를 한 사용자의 토큰을 다시 꺼내기 어려울 수 있습니다.
-        // 이를 위해 'user' 토큰을 가져오는 함수가 필요합니다.
-        await supabase
+        const { data: ghUser } = await supabase
           .from("ghostdev_users")
-          .select("github_token")
+          .select("github_access_token")
           .eq("id", run.triggered_by)
           .single();
 
-        // 여기서는 임시로 서비스 클라이언트에서 github token 획득을 시도
-        // (실제 프로젝트 로직에 따라 getGitHubToken 등을 조정하세요)
+        if (!ghUser?.github_access_token) {
+          throw new Error("GitHub 토큰을 찾을 수 없습니다.");
+        }
+
+        const token = decryptToken(ghUser.github_access_token);
+        const octokit = createOctokit(token);
+
+        const dispatchInputs = JSON.parse(run.dispatch_inputs);
+        const repo = run.ghostdev_tickets.ghostdev_repos;
+
+        await octokit.actions.createWorkflowDispatch({
+          owner: repo.repo_owner,
+          repo: repo.repo_name,
+          workflow_id: repo.workflow_file,
+          ref: dispatchInputs.base_branch,
+          inputs: dispatchInputs,
+        });
       } catch (err) {
-        console.error("재시도(dispatch) 트리거 중 에러", err);
+        console.error("재시도 dispatch 실패:", err);
+        // dispatch 실패 시 FAILURE로 전환
+        await supabase
+          .from("ghostdev_agent_runs")
+          .update({ status: "FAILURE" })
+          .eq("id", runId);
+        await supabase
+          .from("ghostdev_tickets")
+          .update({ status: "FAILED" })
+          .eq("id", run.ticket_id);
+        return NextResponse.json({
+          message: "Retry dispatch failed. Marking as FAILED.",
+        });
       }
     }
 
-    // 이 예제에서는 단순 상태만 업데이트하고,
-    // 실제 dispatch는 서버 측 토큰 시스템에 의존합니다.
     return NextResponse.json({
       message: "Retrying",
       retryCount: newRetryCount,
