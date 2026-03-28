@@ -19,7 +19,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.1",
     "@tanstack/react-query": "^5.90.20",
-    "@vanilla-extract/css": "^1.18.0",
+    "@vanilla-extract/css": "1.18.0",
     "ai": "^4.3.16",
     "jotai": "^2.16.1",
     "libsodium-wrappers": "^0.8.2",

@@ -28,11 +28,19 @@ export function TicketCard({ ticket, projectId, workspaceTag }: TicketCardProps)
   const triggerRun = useTriggerRun(projectId);
   const priority = getPriority(ticket.priority);
 
+  const isClickable = ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
+
+  const handleCardClick = () => {
+    if (isClickable) {
+      router.push(`/projects/${projectId}/tickets/${ticket.id}`);
+    }
+  };
+
   const handleRun = (e: React.MouseEvent) => {
     e.stopPropagation();
     triggerRun.mutate(ticket.id, {
-      onSuccess: ({ runId }) => {
-        router.push(`/projects/${projectId}/runs/${runId}`);
+      onSuccess: () => {
+        router.push(`/projects/${projectId}/tickets/${ticket.id}`);
       },
       onError: (error) => {
         alert(error.message);
@@ -41,7 +49,11 @@ export function TicketCard({ ticket, projectId, workspaceTag }: TicketCardProps)
   };
 
   return (
-    <div className={s.card}>
+    <div
+      className={s.card}
+      onClick={handleCardClick}
+      style={isClickable ? { cursor: "pointer" } : undefined}
+    >
       <div className={s.cardHeader}>
         <span className={s.ticketId}>{getTicketDisplayId(ticket.id)}</span>
         {workspaceTag && <span className={s.workspaceTag}>{workspaceTag}</span>}

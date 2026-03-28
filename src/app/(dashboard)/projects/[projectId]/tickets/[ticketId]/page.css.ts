@@ -22,7 +22,7 @@ export const headerLeft = style({
   gap: vars.space.xs,
 });
 
-export const runId = style({
+export const ticketId = style({
   fontSize: "20px",
   fontWeight: 700,
   color: vars.color.text,
@@ -36,7 +36,7 @@ export const ticketTitle = style({
 });
 
 export const statusBadge = styleVariants({
-  PENDING: {
+  TODO: {
     display: "inline-flex",
     alignItems: "center",
     padding: `2px ${vars.space.sm}`,
@@ -45,16 +45,6 @@ export const statusBadge = styleVariants({
     letterSpacing: "0.1em",
     border: `1px solid ${vars.color.textDim}`,
     color: vars.color.textDim,
-  },
-  QUEUED: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: `2px ${vars.space.sm}`,
-    fontSize: "11px",
-    fontWeight: 700,
-    letterSpacing: "0.1em",
-    border: `1px solid ${vars.color.cyan}`,
-    color: vars.color.cyan,
   },
   IN_PROGRESS: {
     display: "inline-flex",
@@ -66,7 +56,7 @@ export const statusBadge = styleVariants({
     border: `1px solid ${vars.color.yellow}`,
     color: vars.color.yellow,
   },
-  SUCCESS: {
+  DONE: {
     display: "inline-flex",
     alignItems: "center",
     padding: `2px ${vars.space.sm}`,
@@ -76,7 +66,7 @@ export const statusBadge = styleVariants({
     border: `1px solid ${vars.color.green}`,
     color: vars.color.green,
   },
-  FAILURE: {
+  FAILED: {
     display: "inline-flex",
     alignItems: "center",
     padding: `2px ${vars.space.sm}`,
@@ -85,16 +75,6 @@ export const statusBadge = styleVariants({
     letterSpacing: "0.1em",
     border: `1px solid ${vars.color.red}`,
     color: vars.color.red,
-  },
-  CANCELLED: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: `2px ${vars.space.sm}`,
-    fontSize: "11px",
-    fontWeight: 700,
-    letterSpacing: "0.1em",
-    border: `1px solid ${vars.color.textDim}`,
-    color: vars.color.textDim,
   },
 });
 
