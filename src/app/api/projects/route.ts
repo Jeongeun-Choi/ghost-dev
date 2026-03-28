@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         { name: "ANTHROPIC_API_KEY", value: process.env.ANTHROPIC_API_KEY! },
         { name: "GHOSTDEV_NPM_TOKEN", value: process.env.GHOSTDEV_NPM_TOKEN! },
         { name: "SUPABASE_URL", value: process.env.NEXT_PUBLIC_SUPABASE_URL! },
-        { name: "SUPABASE_SERVICE_ROLE_KEY", value: process.env.SUPABASE_SERVICE_ROLE_KEY! },
+        { name: "SUPABASE_SERVICE_ROLE_KEY", value: process.env.SUPABASE_SERVICE_KEY! },
       ].filter(
         (s) => s.value,
       );
