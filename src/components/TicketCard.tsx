@@ -35,7 +35,7 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
 
   const isClickable = ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
   const isEditable = ticket.status === "TODO" || ticket.status === "FAILED";
-  const isCancellable = ticket.status === "QUEUED" || ticket.status === "IN_PROGRESS";
+  const isCancellable = ticket.status === "IN_PROGRESS";
 
   const handleCardClick = () => {
     if (isClickable) {

@@ -30,7 +30,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
   }
 
-  if (!["IN_PROGRESS", "QUEUED"].includes(ticket.status)) {
+  if (ticket.status !== "IN_PROGRESS") {
     return NextResponse.json({ error: "Ticket is not cancellable" }, { status: 400 });
   }
 
