@@ -48,7 +48,8 @@ export async function POST(_request: NextRequest, { params }: Params) {
   if (run?.github_run_id) {
     try {
       const octokit = createOctokit(token);
-      const repo = ticket.ghostdev_repos;
+      const repoRaw = ticket.ghostdev_repos;
+      const repo = Array.isArray(repoRaw) ? repoRaw[0] : repoRaw;
       await octokit.actions.cancelWorkflowRun({
         owner: repo.repo_owner,
         repo: repo.repo_name,
