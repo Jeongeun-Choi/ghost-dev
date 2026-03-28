@@ -37,5 +37,5 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(`${origin}/projects`);
+  return NextResponse.redirect(`${origin}/repos`);
 }

@@ -43,7 +43,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPath && !pathname.startsWith("/auth")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/projects";
+    url.pathname = "/repos";
     return NextResponse.redirect(url);
   }
 
