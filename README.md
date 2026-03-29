@@ -194,6 +194,7 @@ GhostDev는 사용자의 레포지토리에 직접 파일을 생성하고 Secret
 
 ### 보안 & 운영
 
+- **API 키 프록시 서버**: 현재는 `ANTHROPIC_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY` 등 민감한 키를 사용자 레포의 GitHub Actions Secrets에 직접 주입합니다. 다른 사용자가 서비스를 사용할 경우, 서비스 오너의 키가 모든 사용자 레포에 노출되고 비용도 한 계정에 청구됩니다. 현재는 `ALLOWED_GITHUB_LOGIN`으로 단일 계정만 허용하여 이 문제를 우회하고 있습니다. 멀티유저로 확장할 경우, 에이전트가 키를 직접 보유하는 대신 `GHOSTDEV_AGENT_TOKEN`(per-user, revocable)만 받아 GhostDev 서버를 경유해 AI API를 호출하는 프록시 구조가 필요합니다.
 - **토큰 갱신 주기**: 현재 GitHub 액세스 토큰이 만료되면 수동으로 재로그인해야 함. OAuth refresh token을 활용한 자동 갱신 구현 필요
 - **Secrets 자동 만료 감지**: GitHub Actions Secrets의 유효성을 주기적으로 확인하고 만료 시 자동 재주입하는 메커니즘
 - **에이전트 샌드박스**: GitHub Actions 기본 환경에서 실행되는 에이전트의 권한 범위를 더 세밀하게 제한
