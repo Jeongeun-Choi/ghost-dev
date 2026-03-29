@@ -10,7 +10,6 @@ const createTicketSchema = z.object({
   branchPrefix: z.string().optional(),
   targetWorkspace: z.string().nullable().optional(),
   priority: z.number().int().min(1).max(3).optional().default(2),
-  status: z.enum(["TODO", "IN_PROGRESS", "DONE", "FAILED"]).optional().default("TODO"),
 });
 
 export async function POST(request: NextRequest) {
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest) {
       base_branch: parsed.data.baseBranch ?? null,
       target_workspace: parsed.data.targetWorkspace ?? null,
       priority: parsed.data.priority,
-      status: parsed.data.status,
+      status: "TODO", // 티켓 생성 시 항상 TODO로 고정
     })
     .select()
     .single();
