@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import type { RunLog } from "@/types";
+import type { RunLog, AgentRun } from "@/types";
 
 export const runKeys = {
   logs: (runId: string) => ["runs", "logs", runId] as const,
@@ -40,6 +40,38 @@ export function useCancelRun(repoId: string) {
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
     },
   });
+}
+
+// ticketId에 대한 최신 run을 실시간으로 구독
+// initialRunId: 서버 컴포넌트에서 미리 조회한 runId (있으면 즉시 사용)
+export function useLatestRun(ticketId: string, initialRunId?: string) {
+  const [runId, setRunId] = useState<string | undefined>(initialRunId);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel(`latest-run:${ticketId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "ghostdev_agent_runs",
+          filter: `ticket_id=eq.${ticketId}`,
+        },
+        (payload) => {
+          setRunId((payload.new as AgentRun).id);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [ticketId]);
+
+  return runId;
 }
 
 // Supabase Realtime을 통해 run_logs를 실시간으로 구독
