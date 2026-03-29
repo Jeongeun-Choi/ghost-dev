@@ -1,47 +1,54 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { readFileSync, writeFileSync, readdirSync, statSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from "fs";
 import { execSync } from "child_process";
-import { resolve, join } from "path";
+import { resolve, join, dirname } from "path";
 import { Octokit } from "@octokit/rest";
 import type { AgentLogger } from "../../types.js";
 
 export function createTools(logger: AgentLogger) {
+  // 동일 실행 내 파일 재읽기 방지용 캐시. writeFile 시 무효화.
+  const fileCache = new Map<string, string>();
+
   return {
     readFile: tool({
-      description: "레포 루트 기준 상대 경로로 파일을 읽습니다.",
+      description: "Read a file by repo-relative path.",
       parameters: z.object({
-        path: z.string().describe("레포 루트 기준 상대 경로"),
+        path: z.string().describe("Repo-relative path"),
       }),
       execute: async ({ path }) => {
         const absPath = resolve(process.cwd(), path);
+        if (fileCache.has(absPath)) {
+          await logger.toolResult("readFile", { path, cached: true });
+          return fileCache.get(absPath)!;
+        }
         const content = readFileSync(absPath, "utf-8");
+        fileCache.set(absPath, content);
         await logger.toolResult("readFile", { path, length: content.length });
         return content;
       },
     }),
 
     writeFile: tool({
-      description: "파일을 생성하거나 덮어씁니다.",
+      description: "Create or overwrite a file.",
       parameters: z.object({
-        path: z.string().describe("레포 루트 기준 상대 경로"),
-        content: z.string().describe("파일 전체 내용"),
+        path: z.string().describe("Repo-relative path"),
+        content: z.string().describe("Full file content"),
       }),
       execute: async ({ path, content }) => {
         const absPath = resolve(process.cwd(), path);
+        mkdirSync(dirname(absPath), { recursive: true });
         writeFileSync(absPath, content, "utf-8");
+        fileCache.set(absPath, content);
         await logger.toolResult("writeFile", { path, bytes: content.length });
         return { success: true, path };
       },
     }),
 
     listDirectory: tool({
-      description: "디렉토리 내용을 나열합니다.",
+      description: "List directory contents.",
       parameters: z.object({
-        path: z
-          .string()
-          .default(".")
-          .describe("레포 루트 기준 상대 경로 (기본: 루트)"),
+        path: z.string().default(".").describe("Repo-relative path (default: root)"),
         recursive: z.boolean().default(false),
       }),
       execute: async ({ path, recursive }) => {
@@ -56,10 +63,9 @@ export function createTools(logger: AgentLogger) {
     }),
 
     runCommand: tool({
-      description:
-        "쉘 명령어를 실행합니다. lint, typecheck, test 등에 사용하세요.",
+      description: "Run a shell command (lint, typecheck, test, etc.).",
       parameters: z.object({
-        command: z.string().describe("실행할 명령어"),
+        command: z.string().describe("Shell command to execute"),
       }),
       execute: async ({ command }) => {
         await logger.toolCall("runCommand", { command });
@@ -91,15 +97,12 @@ export function createTools(logger: AgentLogger) {
     }),
 
     createPR: tool({
-      description:
-        "변경사항을 커밋하고 새 브랜치에 푸시한 뒤 Pull Request를 생성합니다.",
+      description: "Commit changes, push to a new branch, and open a Pull Request.",
       parameters: z.object({
-        branchName: z
-          .string()
-          .describe("새 브랜치명 (예: ghostdev/fix-auth-bug)"),
-        commitMessage: z.string().describe("커밋 메시지"),
-        prTitle: z.string().describe("PR 제목"),
-        prBody: z.string().describe("PR 본문 (마크다운)"),
+        branchName: z.string().describe("New branch name (e.g. ghostdev/fix-auth-bug)"),
+        commitMessage: z.string().describe("Commit message"),
+        prTitle: z.string().describe("PR title"),
+        prBody: z.string().describe("PR body (markdown)"),
       }),
       execute: async ({ branchName, commitMessage, prTitle, prBody }) => {
         await logger.info(`브랜치 생성: ${branchName}`);

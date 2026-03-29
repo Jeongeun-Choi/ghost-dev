@@ -1,3 +1,4 @@
+import type { CoreMessage } from "ai";
 import type { AgentLogger } from "../types.js";
 
 export class ConsoleLogger implements AgentLogger {
@@ -23,4 +24,12 @@ export class ConsoleLogger implements AgentLogger {
   async success(message: string): Promise<void> {
     console.log(`[SUCCESS] ${message}`);
   }
+
+  async saveCheckpoint(_messages: CoreMessage[]): Promise<void> {}
+
+  async loadCheckpoint(): Promise<CoreMessage[] | null> {
+    return null;
+  }
+
+  async clearCheckpoint(): Promise<void> {}
 }

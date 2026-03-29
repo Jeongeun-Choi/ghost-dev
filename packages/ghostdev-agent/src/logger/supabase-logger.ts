@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { CoreMessage } from "ai";
 import type { AgentLogger } from "../types.js";
 
 export class SupabaseLogger implements AgentLogger {
@@ -46,5 +47,36 @@ export class SupabaseLogger implements AgentLogger {
 
   async success(message: string, metadata?: unknown): Promise<void> {
     return this.write("SUCCESS", message, metadata);
+  }
+
+  async saveCheckpoint(messages: CoreMessage[]): Promise<void> {
+    try {
+      await this.client
+        .from("ghostdev_agent_runs")
+        .update({ messages_checkpoint: messages })
+        .eq("id", this.runId);
+    } catch (err) {
+      console.error("[CHECKPOINT] 저장 실패:", err);
+    }
+  }
+
+  async loadCheckpoint(): Promise<CoreMessage[] | null> {
+    const { data } = await this.client
+      .from("ghostdev_agent_runs")
+      .select("messages_checkpoint")
+      .eq("id", this.runId)
+      .single();
+    return data?.messages_checkpoint ?? null;
+  }
+
+  async clearCheckpoint(): Promise<void> {
+    try {
+      await this.client
+        .from("ghostdev_agent_runs")
+        .update({ messages_checkpoint: null })
+        .eq("id", this.runId);
+    } catch (err) {
+      console.error("[CHECKPOINT] 삭제 실패:", err);
+    }
   }
 }
