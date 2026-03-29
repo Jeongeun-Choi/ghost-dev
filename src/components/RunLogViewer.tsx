@@ -1,12 +1,28 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRunLogs } from "@/features/runs/hooks";
+import { useRunLogs, useLatestRun } from "@/features/runs/hooks";
 import type { LogLevel } from "@/types";
 import * as s from "./RunLogViewer.css";
 
 interface Props {
   runId: string;
+}
+
+interface TicketLogSectionProps {
+  ticketId: string;
+  initialRunId?: string;
+  logWrapperClassName?: string;
+}
+
+export function TicketLogSection({ ticketId, initialRunId, logWrapperClassName }: TicketLogSectionProps) {
+  const runId = useLatestRun(ticketId, initialRunId);
+  if (!runId) return null;
+  return (
+    <div className={logWrapperClassName}>
+      <RunLogViewer runId={runId} />
+    </div>
+  );
 }
 
 const levelStyles: Record<LogLevel, string> = {

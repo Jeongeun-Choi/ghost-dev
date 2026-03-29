@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { RunLogViewer } from "@/components/RunLogViewer";
+import { TicketLogSection } from "@/components/RunLogViewer";
 import type { TicketStatus } from "@/types";
 import * as s from "./page.css";
 
@@ -49,11 +49,11 @@ export default async function TicketPage({ params }: Props) {
         <span className={s.statusBadge[status]}>{status}</span>
       </div>
 
-      {latestRun && (
-        <div className={s.logWrapper}>
-          <RunLogViewer runId={latestRun.id} />
-        </div>
-      )}
+      <TicketLogSection
+        ticketId={ticketId}
+        initialRunId={latestRun?.id}
+        logWrapperClassName={s.logWrapper}
+      />
     </div>
   );
 }
