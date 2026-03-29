@@ -1,7 +1,13 @@
 import * as s from "./page.css";
 import { GitHubSignInButton } from "@/features/auth/components/GitHubSignInButton";
 
-export default function SignInPage() {
+interface Props {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function SignInPage({ searchParams }: Props) {
+  const { error } = await searchParams;
+
   return (
     <main className={s.container}>
       <div className={s.card}>
@@ -17,6 +23,10 @@ export default function SignInPage() {
         </p>
 
         <div className={s.divider} />
+
+        {error === "unauthorized" && (
+          <p className={s.errorMessage}>등록되지 않은 계정입니다.</p>
+        )}
 
         <GitHubSignInButton className={s.signInButton} />
       </div>

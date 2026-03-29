@@ -1,36 +1,205 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GhostDev
 
-## Getting Started
+> 내가 업무에 집중하는 동안, AI는 내 사이드 프로젝트를 빌드합니다.
 
-First, run the development server:
+GhostDev는 AI 에이전트에게 사이드 프로젝트 개발을 위임할 수 있는 GitHub 자동화 플랫폼입니다. 개발자가 티켓(작업 지시서)을 작성하면, AI 에이전트가 GitHub Actions 위에서 실제 코드를 작성하고 Pull Request를 생성합니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 프로젝트 흐름
+
+```
+GitHub 로그인
+     ↓
+레포지토리 연결
+     ↓
+티켓 생성 (할 일 작성)
+├── AI가 브랜치 이름 자동 제안
+└── 칸반 보드 TODO 컬럼에 추가
+     ↓
+티켓 실행 (▶ 버튼 클릭)
+├── GitHub workflow_dispatch API로 GhostDev 워크플로우 트리거
+├── GitHub Actions에서 AI 에이전트 실행
+│   ├── 에이전트가 코드 작성
+│   ├── 실행 로그를 Supabase Realtime으로 실시간 전송
+│   └── PR 생성 후 콜백 API 호출
+└── 티켓 상태 DONE + PR URL 업데이트
+     ↓
+칸반 보드에서 진행 상황 확인
+└── 로그 뷰어로 에이전트 작업 내역 실시간 확인
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+핵심은 **GitHub Actions를 실행 환경으로 사용**한다는 점입니다. 에이전트가 사용자의 레포지토리 컨텍스트 안에서 직접 실행되므로, 별도 서버나 복잡한 환경 설정 없이 AI가 실제 코드베이스에 접근하여 작업합니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 기술 스택
 
-## Learn More
+### Frontend & Framework
 
-To learn more about Next.js, take a look at the following resources:
+| 기술                     | 버전 | 선택 이유                                                                                            |
+| ------------------------ | ---- | ---------------------------------------------------------------------------------------------------- |
+| **Next.js** (App Router) | 16   | 서버 컴포넌트 기반 아키텍처로 초기 로딩 최적화. App Router의 레이아웃 중첩 구조가 대시보드 UI에 적합 |
+| **React**                | 19   | `useActionState`, `useFormStatus` 등 폼 처리 최신 API 활용. Concurrent Features로 UI 응답성 향상     |
+| **TypeScript**           | 5    | 복잡한 티켓-런-로그 데이터 구조와 API 경계를 타입으로 명확하게 정의                                  |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 스타일링
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| 기술                | 버전 | 선택 이유                                                                                                                                            |
+| ------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vanilla Extract** | 1.18 | 빌드 타임에 CSS를 생성하므로 런타임 오버헤드 없음. TypeScript와 100% 타입 안전한 디자인 토큰 관리. CSS Modules의 장점 + CSS-in-JS의 타입 안전성 결합 |
 
-## Deploy on Vercel
+### 상태 관리
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| 기술                     | 버전 | 선택 이유                                                                                                   |
+| ------------------------ | ---- | ----------------------------------------------------------------------------------------------------------- |
+| **TanStack React Query** | 5    | 서버 데이터(레포, 티켓, 런)의 캐싱·동기화·리페치를 선언적으로 처리. `useEffect`로 직접 관리하는 복잡성 제거 |
+| **Jotai**                | 2    | 모달 열림 상태, 선택된 티켓 등 전역 UI 상태를 atoms 단위로 관리. Redux 대비 보일러플레이트 최소화           |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Backend & Database
+
+| 기술                   | 버전 | 선택 이유                                                                                                                               |
+| ---------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Supabase**           | 2    | PostgreSQL DB + GitHub OAuth + Realtime 구독을 단일 플랫폼으로 해결. 에이전트 로그의 실시간 스트리밍을 위해 Supabase Realtime 채널 활용 |
+| **Next.js API Routes** | —    | 별도 백엔드 서버 불필요. GitHub webhook 수신, 에이전트 콜백 처리, GitHub API 프록시를 Next.js 안에서 통합                               |
+
+### AI & 외부 통합
+
+| 기술                 | 버전               | 선택 이유                                                                               |
+| -------------------- | ------------------ | --------------------------------------------------------------------------------------- |
+| **Vercel AI SDK**    | 4.3                | Claude, Gemini 등 여러 LLM을 동일한 인터페이스로 추상화. 모델 교체 시 코드 변경 최소화  |
+| **Anthropic Claude** | Haiku 4.5 / Sonnet | 브랜치 이름 제안(Haiku: 빠르고 저렴), 실제 코드 작성(Sonnet: 고성능)                    |
+| **Octokit**          | 22                 | GitHub REST API 공식 클라이언트. workflow_dispatch, Secrets 관리, 레포 정보 조회에 사용 |
+| **libsodium**        | 0.8                | GitHub Actions Secrets는 공개키로 암호화해야 함. 공식 API 스펙 준수                     |
+
+### DnD & 기타
+
+| 기술         | 선택 이유                                                                            |
+| ------------ | ------------------------------------------------------------------------------------ |
+| **@dnd-kit** | 칸반 보드 드래그 앤 드롭. 접근성(키보드 지원)을 고려한 라이브러리                    |
+| **Zod**      | API 경계에서 런타임 타입 검증. 외부 입력(사용자 요청, 에이전트 콜백)을 안전하게 파싱 |
+
+---
+
+## 주요 기능
+
+### 1. GitHub OAuth 연동
+
+GitHub 계정으로 로그인하며, `repo`와 `workflow` 스코프 권한을 획득합니다. Supabase가 OAuth 플로우를 처리하고, 발급된 GitHub 액세스 토큰은 AES-256-GCM으로 암호화하여 DB에 저장합니다.
+
+### 2. 레포지토리 연결 및 자동 설정
+
+레포를 연결하면 두 가지 작업이 자동으로 수행됩니다.
+
+**워크플로우 파일 설치**: `.github/workflows/ghostdev.yml` 파일이 해당 레포에 자동으로 생성됩니다. 이 파일이 GhostDev의 실행 트리거입니다.
+
+**GitHub Actions Secrets 주입**: 에이전트가 실행될 때 필요한 환경 변수(Anthropic API 키, Supabase 접속 정보, 콜백 토큰 등)를 해당 레포의 Secrets에 자동으로 등록합니다. libsodium으로 공개키 암호화를 거쳐 GitHub API 스펙에 맞게 저장합니다.
+
+**모노레포 자동 감지**: pnpm-workspace.yaml, package.json workspaces, lerna.json을 분석해 모노레포 여부와 워크스페이스 목록을 감지합니다.
+
+### 3. 티켓 관리 (칸반 보드)
+
+작업 지시서인 티켓을 4개 상태 컬럼으로 관리합니다:
+
+- **TODO**: 대기 중인 작업
+- **IN_PROGRESS**: 에이전트가 현재 실행 중
+- **DONE**: 에이전트가 PR을 생성하고 완료
+- **FAILED**: 실행 중 오류 발생 (재시도 가능)
+
+티켓 생성 시 Claude Haiku가 티켓 제목과 설명을 분석해 적절한 브랜치 이름을 자동으로 제안합니다. 모노레포의 경우 대상 워크스페이스(패키지)를 지정해 에이전트가 해당 패키지에만 집중하도록 할 수 있습니다.
+
+### 4. AI 에이전트 실행
+
+티켓의 ▶ 버튼을 누르면 다음 흐름이 진행됩니다:
+
+1. **토큰 한도 검증**: 일일 50만 토큰 한도를 초과하면 실행 차단
+2. **콜백 토큰 생성**: 에이전트 실행 결과를 인증받기 위한 일회용 토큰 발급
+3. **GitHub workflow_dispatch**: 사용자 레포의 GhostDev 워크플로우를 원격 트리거
+4. **에이전트 실행**: GitHub Actions에서 `npx @jeongeun-choi/agent@latest` 실행. 에이전트는 티켓 내용을 기반으로 코드를 작성하고 PR을 생성
+5. **콜백 수신**: 에이전트가 완료 시 `/api/runs/[runId]/callback`을 호출해 토큰 사용량과 PR URL을 전달
+6. **Webhook 수신**: GitHub이 `workflow_run` 이벤트를 전송하면 런 상태를 최신화
+
+### 5. 실시간 로그 스트리밍
+
+티켓 상세 페이지에서 에이전트의 작업 내역을 실시간으로 확인할 수 있습니다. 에이전트가 Supabase `ghostdev_run_logs` 테이블에 로그를 기록하면, 프론트엔드가 Supabase Realtime 구독으로 즉시 수신해 터미널 형태로 표시합니다. 로그 레벨은 `INFO`, `TOOL_CALL`, `TOOL_RESULT`, `ERROR`, `SUCCESS`로 구분됩니다.
+
+### 6. 실행 취소
+
+`IN_PROGRESS` 상태의 티켓은 취소할 수 있습니다. GitHub Actions 워크플로우 실행을 강제 중단하고 티켓 상태를 되돌립니다.
+
+### 7. 모노레포 워크스페이스 필터
+
+모노레포 레포의 경우 칸반 보드 상단에 워크스페이스 탭이 표시됩니다. 탭을 선택하면 해당 패키지를 대상으로 하는 티켓만 필터링됩니다.
+
+---
+
+## 데이터베이스 구조
+
+```
+ghostdev_users          — 사용자 계정 (암호화된 GitHub 토큰 포함)
+    └── ghostdev_repos  — 연결된 레포지토리
+            └── ghostdev_tickets        — 작업 티켓
+                    └── ghostdev_agent_runs     — 에이전트 실행 기록
+                                └── ghostdev_run_logs   — 실시간 로그
+```
+
+---
+
+## 접근 제한
+
+개인 용도로만 사용하기 위해 허용된 GitHub 계정만 로그인할 수 있도록 제한할 수 있습니다.
+
+Vercel 환경 변수(또는 `.env.local`)에 `ALLOWED_GITHUB_LOGIN`을 추가하면 해당 계정 외의 GitHub 계정으로 로그인 시 "등록되지 않은 계정입니다." 메시지와 함께 접근이 차단됩니다. 설정하지 않으면 누구나 로그인할 수 있습니다.
+
+---
+
+## 개발 환경 실행
+
+```bash
+npm install
+npm run dev
+```
+
+---
+
+## 우려할 점
+
+### 타겟 레포 직접 수정
+
+GhostDev는 사용자의 레포지토리에 직접 파일을 생성하고 Secrets를 주입합니다. 이 구조는 편의성이 높지만 몇 가지 리스크가 있습니다.
+
+**워크플로우 파일 신뢰 문제**: `.github/workflows/ghostdev.yml`이 레포에 커밋되면, 해당 레포의 모든 collaborator가 이 워크플로우를 볼 수 있습니다. 워크플로우 내용이 변조되거나 악의적인 PR이 워크플로우를 덮어쓰는 시나리오를 고려해야 합니다.
+
+**GitHub Actions Secrets 범위**: GhostDev가 주입하는 Secrets(특히 `ANTHROPIC_API_KEY`)는 해당 레포의 모든 워크플로우에서 접근 가능합니다. 레포에 다른 워크플로우가 존재하거나, fork된 레포에서 PR이 올 경우 Secrets 노출 위험이 있습니다.
+
+**GitHub 토큰 권한 범위**: 레포 연결 시 `repo` + `workflow` 스코프를 요청하는데, 이는 사용자의 모든 레포에 대한 읽기/쓰기 + 워크플로우 수정 권한입니다. GhostDev 서버가 침해될 경우 연결된 사용자의 전체 GitHub 계정이 위험에 노출됩니다.
+
+**Secrets 삭제 누락**: 레포 연결을 해제해도 이미 주입된 GitHub Actions Secrets는 자동으로 삭제되지 않을 수 있습니다. 사용자가 직접 삭제해야 한다는 점을 명확히 안내할 필요가 있습니다.
+
+---
+
+## 개선할 점
+
+### 아키텍처
+
+- **GitHub Actions 대기 시간**: workflow_dispatch 이후 실제 실행까지 GitHub 큐 대기 시간이 있음. 즉각적인 실행이 필요한 경우 자체 실행 서버(self-hosted runner) 도입을 고려할 수 있음
+- **멀티 에이전트 병렬 실행**: 현재는 티켓 하나씩 순차 실행. 여러 티켓을 동시에 실행하는 병렬 처리 지원
+
+### 기능
+
+- **PR 리뷰 루프**: 에이전트가 생성한 PR에 코멘트를 달면, 에이전트가 이를 읽고 수정하는 피드백 루프 구현
+- **티켓 간 의존성 관리**: 티켓 A가 완료된 후 티켓 B를 실행하는 의존성/순서 지정 기능
+- **에이전트 실행 히스토리**: 같은 티켓의 재시도 기록과 이전 실행 로그를 비교해서 볼 수 있는 히스토리 UI
+- **슬랙/디스코드 알림**: 에이전트가 PR을 생성하거나 실패했을 때 알림 발송
+
+### 보안 & 운영
+
+- **토큰 갱신 주기**: 현재 GitHub 액세스 토큰이 만료되면 수동으로 재로그인해야 함. OAuth refresh token을 활용한 자동 갱신 구현 필요
+- **Secrets 자동 만료 감지**: GitHub Actions Secrets의 유효성을 주기적으로 확인하고 만료 시 자동 재주입하는 메커니즘
+- **에이전트 샌드박스**: GitHub Actions 기본 환경에서 실행되는 에이전트의 권한 범위를 더 세밀하게 제한
+
+### 개발 경험
+
+- **티켓 템플릿**: 자주 쓰는 작업 유형(버그 수정, 기능 추가, 리팩토링)에 대한 티켓 템플릿 제공
+- **에이전트 커스터마이징**: 사용자가 에이전트에게 프로젝트별 컨텍스트(코딩 스타일, 사용 라이브러리 등)를 제공할 수 있는 설정 UI
+- **비용 대시보드**: 토큰 사용량을 기반으로 월별 비용 추이와 티켓별 비용을 시각화

@@ -56,6 +56,16 @@ export const divider = style({
   backgroundColor: vars.color.cardBorder,
 });
 
+export const errorMessage = style({
+  width: "100%",
+  padding: `${vars.space.sm} ${vars.space.md}`,
+  border: `1px solid ${vars.color.red}`,
+  color: vars.color.red,
+  fontSize: "11px",
+  letterSpacing: "0.05em",
+  textAlign: "center",
+});
+
 export const signInButton = style({
   width: "100%",
   display: "flex",

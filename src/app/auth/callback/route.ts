@@ -22,6 +22,12 @@ export async function GET(request: NextRequest) {
   const githubNodeId = user.user_metadata?.sub as string | undefined;
   const avatarUrl = user.user_metadata?.avatar_url as string | undefined;
 
+  const allowedLogin = process.env.ALLOWED_GITHUB_LOGIN;
+  if (allowedLogin && githubLogin !== allowedLogin) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(`${origin}/sign-in?error=unauthorized`);
+  }
+
   if (githubLogin && githubNodeId) {
     const providerToken = data.session.provider_token;
     await supabase.from("ghostdev_users").upsert(
