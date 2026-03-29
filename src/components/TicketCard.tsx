@@ -35,6 +35,7 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
 
   const isClickable = ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
   const isEditable = ticket.status === "TODO" || ticket.status === "FAILED";
+  const isTriggerVisible = ticket.status === "TODO" || ticket.status === "FAILED";
   const isCancellable = ticket.status === "IN_PROGRESS";
 
   const handleCardClick = () => {
@@ -118,19 +119,21 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
                     ✎
                   </button>
                 )}
-                <button
-                  className={s.playButton}
-                  onClick={handleRun}
-                  disabled={triggerRun.isPending}
-                  title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
-                  style={
-                    triggerRun.isError || ticket.status === "FAILED"
-                      ? { color: "#EF4444" }
-                      : undefined
-                  }
-                >
-                  {triggerRun.isPending ? "⟳" : triggerRun.isError ? "✕" : ticket.status === "FAILED" ? "⟳" : "▶"}
-                </button>
+                {isTriggerVisible && (
+                  <button
+                    className={s.playButton}
+                    onClick={handleRun}
+                    disabled={triggerRun.isPending}
+                    title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
+                    style={
+                      triggerRun.isError || ticket.status === "FAILED"
+                        ? { color: "#EF4444" }
+                        : undefined
+                    }
+                  >
+                    {triggerRun.isPending ? "⟳" : triggerRun.isError ? "✕" : ticket.status === "FAILED" ? "⟳" : "▶"}
+                  </button>
+                )}
               </>
             )}
           </div>
