@@ -65,6 +65,10 @@ export const playButton = style({
   ":hover": {
     opacity: 0.85,
   },
+  ":disabled": {
+    opacity: 0.5,
+    cursor: "not-allowed",
+  },
 });
 
 export const cancelButton = style({
