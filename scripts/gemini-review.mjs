@@ -133,6 +133,8 @@ function parseDiffPositions(diffText) {
 
 const positionMap = parseDiffPositions(diff);
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function callGemini() {
   const systemInstruction = `너는 시니어 코드 리뷰어야. 다음 우선순위로 코드를 리뷰해줘.
 
@@ -169,29 +171,52 @@ inline_comments가 없으면 빈 배열 [].
 Diff:
 ${truncatedDiff}`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json" },
-      }),
-    },
-  );
+  const maxRetries = 5;
+  const initialDelay = 35000; // 35 seconds for Free Tier RPM (2)
 
-  if (!response.ok) {
-    throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" },
+          }),
+        },
+      );
+
+      if (response.status === 429) {
+        if (attempt === maxRetries) {
+          throw new Error("Gemini API Error: 429 Too Many Requests (Max retries reached)");
+        }
+        const delay = initialDelay * Math.pow(1.5, attempt - 1);
+        console.warn(
+          `[Attempt ${attempt}/${maxRetries}] ⚠️ Rate limit (429) hit. Waiting ${Math.round(delay / 1000)}s...`,
+        );
+        await sleep(delay);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!text) throw new Error("No response from Gemini");
+
+      return JSON.parse(text);
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      console.error(`[Attempt ${attempt}/${maxRetries}] ❌ Error: ${error.message}`);
+      await sleep(5000 * attempt); // Short delay for other errors
+    }
   }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) throw new Error("No response from Gemini");
-
-  return JSON.parse(text);
 }
 
 async function postGithubReview(summary, inlineComments) {
