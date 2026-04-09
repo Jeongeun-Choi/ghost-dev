@@ -41,7 +41,7 @@ if (existsSync("diff.txt")) {
     // Attempt to get diff between base branch and current HEAD
     const baseBranch = process.env.BASE_BRANCH || "main";
     diff = execSync(
-      `git diff origin/${baseBranch}...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg'`,
+      `git diff origin/${baseBranch}...HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx'`,
       {
         encoding: "utf-8",
       },
@@ -56,7 +56,10 @@ if (!diff || !diff.trim()) {
   process.exit(0);
 }
 
-const MAX_CHARS = 100_000;
+const MAX_CHARS = 30_000; // Reduced from 100,000 for Free Tier TPM stability
+if (diff.length > 3000) {
+  console.log(`Current diff size: ${diff.length} characters (Max: ${MAX_CHARS})`);
+}
 const truncatedDiff =
   diff.length > MAX_CHARS ? diff.substring(0, MAX_CHARS) + "\n...(truncated)..." : diff;
 

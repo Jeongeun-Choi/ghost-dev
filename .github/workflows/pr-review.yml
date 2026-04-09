@@ -35,15 +35,15 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             if [ "${{ github.event.action }}" = "synchronize" ]; then
-              git diff ${{ github.event.before }} ${{ github.event.after }} -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+              git diff ${{ github.event.before }} ${{ github.event.after }} -- '*.js' '*.jsx' '*.ts' '*.tsx' > diff.txt
             else
-              git diff origin/${{ github.base_ref }}...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+              git diff origin/${{ github.base_ref }}...HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' > diff.txt
             fi
           elif [ "${{ github.event_name }}" = "push" ]; then
-            git diff ${{ github.event.before }} ${{ github.event.after }} -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+            git diff ${{ github.event.before }} ${{ github.event.after }} -- '*.js' '*.jsx' '*.ts' '*.tsx' > diff.txt
           else
             # Default for workflow_dispatch: diff against main
-            git diff origin/main...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+            git diff origin/main...HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' > diff.txt
           fi
           echo "size=$(wc -c < diff.txt)" >> $GITHUB_OUTPUT
 
