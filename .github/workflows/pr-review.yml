@@ -1,0 +1,45 @@
+name: PR AI Code Review
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Get diff
+        id: diff
+        run: |
+          if [ "${{ github.event.action }}" = "synchronize" ]; then
+            git diff ${{ github.event.before }} ${{ github.event.after }} -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+          else
+            git diff origin/${{ github.base_ref }}...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+          fi
+          echo "size=$(wc -c < diff.txt)" >> $GITHUB_OUTPUT
+
+      - name: Run Gemini review
+        if: steps.diff.outputs.size != '0'
+        run: node scripts/gemini-review.mjs
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-3.1-pro-preview' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
