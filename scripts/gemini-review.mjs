@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import { execSync } from "child_process";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim() || "";
-const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-pro";
+const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || "";
 const REPO = process.env.REPO;
 
