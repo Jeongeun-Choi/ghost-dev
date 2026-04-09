@@ -1,20 +1,54 @@
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
+import { execSync } from "child_process";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim() || "";
-const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-pro";
+const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-3.1-pro-preview";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || "";
-const PR_NUMBER = process.env.PR_NUMBER;
 const REPO = process.env.REPO;
+
+// Try to get PR_NUMBER from env, or find it using gh cli
+let PR_NUMBER = process.env.PR_NUMBER;
+if (!PR_NUMBER && GITHUB_TOKEN) {
+  try {
+    console.log("PR_NUMBER not found, attempting to find it for current branch...");
+    PR_NUMBER = execSync("gh pr view --json number -q .number", {
+      encoding: "utf-8",
+      env: { ...process.env, GH_TOKEN: GITHUB_TOKEN }
+    }).trim();
+    console.log(`Found PR_NUMBER: ${PR_NUMBER}`);
+  } catch {
+    console.warn("Failed to find PR_NUMBER using gh cli.");
+  }
+}
 
 if (!GEMINI_API_KEY) {
   console.log("GEMINI_API_KEY not set, skipping review.");
   process.exit(0);
 }
 
-// Read diff written by workflow
-const diff = readFileSync("diff.txt", "utf-8");
+if (!PR_NUMBER) {
+  console.log("PR_NUMBER not set and could not be found, skipping review.");
+  process.exit(0);
+}
 
-if (!diff.trim()) {
+// Ensure diff.txt exists, or generate it
+let diff = "";
+if (existsSync("diff.txt")) {
+  diff = readFileSync("diff.txt", "utf-8");
+} else {
+  try {
+    console.log("diff.txt not found, generating diff from git...");
+    // Attempt to get diff between base branch and current HEAD
+    const baseBranch = process.env.BASE_BRANCH || "main";
+    diff = execSync(`git diff origin/${baseBranch}...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg'`, {
+      encoding: "utf-8"
+    });
+  } catch (e) {
+    console.error("Failed to generate diff from git:", e.message);
+  }
+}
+
+if (!diff || !diff.trim()) {
   console.log("Empty diff, skipping review.");
   process.exit(0);
 }

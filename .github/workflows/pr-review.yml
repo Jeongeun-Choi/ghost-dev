@@ -3,6 +3,12 @@ name: PR AI Code Review
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+  push:
+    branches:
+      - "feature/*"
+      - "bugfix/*"
+      - "refactor/*"
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -27,10 +33,17 @@ jobs:
       - name: Get diff
         id: diff
         run: |
-          if [ "${{ github.event.action }}" = "synchronize" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            if [ "${{ github.event.action }}" = "synchronize" ]; then
+              git diff ${{ github.event.before }} ${{ github.event.after }} -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+            else
+              git diff origin/${{ github.base_ref }}...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+            fi
+          elif [ "${{ github.event_name }}" = "push" ]; then
             git diff ${{ github.event.before }} ${{ github.event.after }} -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
           else
-            git diff origin/${{ github.base_ref }}...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
+            # Default for workflow_dispatch: diff against main
+            git diff origin/main...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg' > diff.txt
           fi
           echo "size=$(wc -c < diff.txt)" >> $GITHUB_OUTPUT
 
@@ -43,3 +56,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+          BASE_BRANCH: main
