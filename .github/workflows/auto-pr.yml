@@ -139,3 +139,11 @@ jobs:
             --title "PR: ${{ github.ref_name }}" \
             --body-file pr_description.md \
             || echo "PR already exists or encountered an error"
+
+      - name: Run AI Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BASE_BRANCH: main
+        run: node scripts/gemini-review.mjs
