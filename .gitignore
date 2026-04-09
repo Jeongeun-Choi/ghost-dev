@@ -44,6 +44,4 @@ next-env.d.ts
 packages/ghostdev-agent/dist/
 packages/ghostdev-agent/node_modules/
 
-.claude/
-2026-03-27-troubleshooting.md
-RATE_LIMIT_FIX.md
+.claude/worktrees
