@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import { execSync } from "child_process";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY?.trim() || "";
-const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-3.1-pro-preview";
+const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-pro";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || "";
 const REPO = process.env.REPO;
 
@@ -13,7 +13,7 @@ if (!PR_NUMBER && GITHUB_TOKEN) {
     console.log("PR_NUMBER not found, attempting to find it for current branch...");
     PR_NUMBER = execSync("gh pr view --json number -q .number", {
       encoding: "utf-8",
-      env: { ...process.env, GH_TOKEN: GITHUB_TOKEN }
+      env: { ...process.env, GH_TOKEN: GITHUB_TOKEN },
     }).trim();
     console.log(`Found PR_NUMBER: ${PR_NUMBER}`);
   } catch {
@@ -40,9 +40,12 @@ if (existsSync("diff.txt")) {
     console.log("diff.txt not found, generating diff from git...");
     // Attempt to get diff between base branch and current HEAD
     const baseBranch = process.env.BASE_BRANCH || "main";
-    diff = execSync(`git diff origin/${baseBranch}...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg'`, {
-      encoding: "utf-8"
-    });
+    diff = execSync(
+      `git diff origin/${baseBranch}...HEAD -- . ':!pnpm-lock.yaml' ':!*.min.js' ':!*.svg'`,
+      {
+        encoding: "utf-8",
+      },
+    );
   } catch (e) {
     console.error("Failed to generate diff from git:", e.message);
   }
