@@ -49,10 +49,7 @@ export default async function RepoPage({ params }: Props) {
           <h1 className={s.pageTitle}>{repo.name}</h1>
         </div>
         {!isMonorepo && (
-          <InitTaskButton
-            repoId={repoId}
-            defaultBranch={repo.default_branch}
-          />
+          <InitTaskButton repoId={repoId} defaultBranch={repo.default_branch} />
         )}
       </div>
 

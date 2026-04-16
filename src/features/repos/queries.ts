@@ -45,7 +45,9 @@ export async function fetchGitHubRepos() {
 }
 
 export async function fetchMonorepoConfig(owner: string, repo: string) {
-  const res = await fetch(`/api/github/detect-monorepo?owner=${owner}&repo=${repo}`);
+  const res = await fetch(
+    `/api/github/detect-monorepo?owner=${owner}&repo=${repo}`,
+  );
   if (!res.ok) return null;
   return res.json();
 }

@@ -91,6 +91,24 @@ export async function POST(_request: NextRequest, { params }: Params) {
     );
   }
 
+  // 이전 실패 run의 체크포인트가 있으면 새 run에 복사 (재개용)
+  const { data: lastFailedRun } = await supabase
+    .from("ghostdev_agent_runs")
+    .select("messages_checkpoint")
+    .eq("ticket_id", ticket.id)
+    .eq("status", "FAILURE")
+    .not("messages_checkpoint", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (lastFailedRun?.messages_checkpoint) {
+    await supabase
+      .from("ghostdev_agent_runs")
+      .update({ messages_checkpoint: lastFailedRun.messages_checkpoint })
+      .eq("id", run.id);
+  }
+
   const dispatchInputs: DispatchInputs = {
     run_id: run.id,
     ticket_id: ticket.id,
@@ -114,10 +132,18 @@ export async function POST(_request: NextRequest, { params }: Params) {
         { name: "ANTHROPIC_API_KEY", value: process.env.ANTHROPIC_API_KEY! },
         { name: "GHOSTDEV_NPM_TOKEN", value: process.env.GHOSTDEV_NPM_TOKEN! },
         { name: "SUPABASE_URL", value: process.env.NEXT_PUBLIC_SUPABASE_URL! },
-        { name: "SUPABASE_SERVICE_ROLE_KEY", value: process.env.SUPABASE_SERVICE_KEY! },
+        {
+          name: "SUPABASE_SERVICE_ROLE_KEY",
+          value: process.env.SUPABASE_SERVICE_KEY!,
+        },
       ].filter((s) => s.value);
       if (secrets.length > 0) {
-        await installRepoSecrets(octokit, project.repo_owner, project.repo_name, secrets);
+        await installRepoSecrets(
+          octokit,
+          project.repo_owner,
+          project.repo_name,
+          secrets,
+        );
       }
     } catch (err) {
       console.error("시크릿 업데이트 실패 (런은 계속 진행):", err);

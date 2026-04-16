@@ -19,31 +19,31 @@ argument-hint: (선택) 커밋에 대한 추가 힌트나 맥락 (예: 로그인
 
 ## 커밋 타입 결정 규칙
 
-| 타입 | 언제 사용 |
-|---|---|
-| `feat` | 새로운 기능 추가 |
-| `fix` | 버그 수정 |
-| `refactor` | 기능 변경 없는 코드 개선 |
-| `style` | 포맷팅, 스타일 변경 (로직 무관) |
-| `docs` | 문서, 주석, README 변경 |
-| `chore` | 빌드, 설정, 의존성 변경 |
-| `test` | 테스트 추가 또는 수정 |
-| `ci` | CI/CD 파이프라인 변경 |
+| 타입       | 언제 사용                       |
+| ---------- | ------------------------------- |
+| `feat`     | 새로운 기능 추가                |
+| `fix`      | 버그 수정                       |
+| `refactor` | 기능 변경 없는 코드 개선        |
+| `style`    | 포맷팅, 스타일 변경 (로직 무관) |
+| `docs`     | 문서, 주석, README 변경         |
+| `chore`    | 빌드, 설정, 의존성 변경         |
+| `test`     | 테스트 추가 또는 수정           |
+| `ci`       | CI/CD 파이프라인 변경           |
 
 ## 스코프 결정 규칙
 
 변경된 파일 경로를 기준으로 스코프를 결정합니다:
 
-| 변경 경로 | 스코프 |
-|---|---|
-| `apps/ghostdev/` | `ghostdev` |
-| `apps/pin-plate/` | `pin-plate` |
-| `apps/web/` | `web` |
-| `packages/ui/` | `ui` |
-| `packages/ghostdev-agent/` | `ghostdev-agent` |
-| `.claude/`, `CLAUDE.md` | `claude` |
-| `.github/` | `ci` |
-| 루트 설정 파일 (`package.json`, `tsconfig.json` 등) | `config` |
+| 변경 경로                                           | 스코프           |
+| --------------------------------------------------- | ---------------- |
+| `apps/ghostdev/`                                    | `ghostdev`       |
+| `apps/pin-plate/`                                   | `pin-plate`      |
+| `apps/web/`                                         | `web`            |
+| `packages/ui/`                                      | `ui`             |
+| `packages/ghostdev-agent/`                          | `ghostdev-agent` |
+| `.claude/`, `CLAUDE.md`                             | `claude`         |
+| `.github/`                                          | `ci`             |
+| 루트 설정 파일 (`package.json`, `tsconfig.json` 등) | `config`         |
 
 여러 앱/패키지가 동시에 변경된 경우 가장 많이 변경된 경로의 스코프를 사용합니다.
 

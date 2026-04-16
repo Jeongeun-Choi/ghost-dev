@@ -51,6 +51,14 @@ export async function POST(request: NextRequest, { params }: Params) {
   const MAX_RETRIES = 3;
   const currentRetry = run.retry_count || 0;
 
+  // 이미 재시도가 진행 중이면 (QUEUED) 중복 콜백 무시
+  // — 에이전트 reportError + 워크플로 curl 두 번 올 수 있음
+  if (run.status === "QUEUED") {
+    return NextResponse.json({
+      message: "Retry already in progress. Ignoring duplicate callback.",
+    });
+  }
+
   if (currentRetry < MAX_RETRIES) {
     const newRetryCount = currentRetry + 1;
 
@@ -108,7 +116,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       retryCount: newRetryCount,
     });
   } else {
-    // 무한루프 방지 - 최종 실패 처리
+    // 최대 재시도 횟수 도달 — 최종 실패 처리
     await supabase
       .from("ghostdev_agent_runs")
       .update({ status: "FAILURE" })

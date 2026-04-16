@@ -33,9 +33,11 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
   const cancelRun = useCancelRun(repoId);
   const priority = getPriority(ticket.priority);
 
-  const isClickable = ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
+  const isClickable =
+    ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
   const isEditable = ticket.status === "TODO" || ticket.status === "FAILED";
-  const isTriggerVisible = ticket.status === "TODO" || ticket.status === "FAILED";
+  const isTriggerVisible =
+    ticket.status === "TODO" || ticket.status === "FAILED";
   const isCancellable = ticket.status === "IN_PROGRESS";
 
   const handleCardClick = () => {
@@ -75,13 +77,17 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
       >
         <div className={s.cardHeader}>
           <span className={s.ticketId}>{getTicketDisplayId(ticket.id)}</span>
-          {workspaceTag && <span className={s.workspaceTag}>{workspaceTag}</span>}
+          {workspaceTag && (
+            <span className={s.workspaceTag}>{workspaceTag}</span>
+          )}
         </div>
 
         <p className={s.title}>{ticket.title}</p>
 
         <div className={s.cardFooter}>
-          <span className={`${s.badge} ${s.badgeVariants[priority]}`}>{priority}</span>
+          <span className={`${s.badge} ${s.badgeVariants[priority]}`}>
+            {priority}
+          </span>
 
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             {ticket.status === "DONE" && ticket.pr_url && (
@@ -124,14 +130,24 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
                     className={s.playButton}
                     onClick={handleRun}
                     disabled={triggerRun.isPending}
-                    title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
+                    title={
+                      ticket.status === "FAILED"
+                        ? "수동 재시도"
+                        : "AI 에이전트 실행"
+                    }
                     style={
                       triggerRun.isError || ticket.status === "FAILED"
                         ? { color: "#EF4444" }
                         : undefined
                     }
                   >
-                    {triggerRun.isPending ? "⟳" : triggerRun.isError ? "✕" : ticket.status === "FAILED" ? "⟳" : "▶"}
+                    {triggerRun.isPending
+                      ? "⟳"
+                      : triggerRun.isError
+                        ? "✕"
+                        : ticket.status === "FAILED"
+                          ? "⟳"
+                          : "▶"}
                   </button>
                 )}
               </>

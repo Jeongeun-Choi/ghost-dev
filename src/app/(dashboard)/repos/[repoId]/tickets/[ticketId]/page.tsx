@@ -41,7 +41,12 @@ export default async function TicketPage({ params }: Props) {
             <span className={s.ticketTitle}>↳ {ticket.title}</span>
           )}
           {ticket.pr_url && (
-            <a href={ticket.pr_url} target="_blank" rel="noopener noreferrer" className={s.prLink}>
+            <a
+              href={ticket.pr_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={s.prLink}
+            >
               VIEW_PR #{ticket.pr_number} ↗
             </a>
           )}

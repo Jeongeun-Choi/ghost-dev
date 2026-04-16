@@ -12,10 +12,12 @@ argument-hint: 티켓 내용을 간략히 설명해주세요 (예: 로그인 API
 다음 기준으로 Jira 프로젝트 키를 결정합니다:
 
 **GAD 프로젝트** (ghostdev 관련):
+
 - 키워드: `ghostdev`, `ghost`, `ghost-dev`, `agent`, `github action`, `ticket run`, `agent run`, `claude agent`, `workflow dispatch`
 - 파일 경로에 `apps/ghostdev` 또는 `packages/ghostdev-agent` 포함
 
 **KAN 프로젝트** (pin-plate 관련):
+
 - 키워드: `pin-plate`, `pinplate`, `지도`, `map`, `marker`, `마커`, `kakao`, `naver`, `위치`, `핀`
 - 파일 경로에 `apps/pin-plate` 포함
 
@@ -64,7 +66,10 @@ argument-hint: 티켓 내용을 간략히 설명해주세요 (예: 로그인 API
              {
                "type": "listItem",
                "content": [
-                 { "type": "paragraph", "content": [{ "type": "text", "text": "항목" }] }
+                 {
+                   "type": "paragraph",
+                   "content": [{ "type": "text", "text": "항목" }]
+                 }
                ]
              }
            ]
@@ -84,6 +89,7 @@ argument-hint: 티켓 내용을 간략히 설명해주세요 (예: 로그인 API
      - 예) "워크스페이스 보드 필터 개선" → `improve-workspace-board-filter`
 
    **출력 형식:**
+
    ```
    티켓이 생성되었습니다!
    🔗 https://...atlassian.net/browse/{티켓-키}

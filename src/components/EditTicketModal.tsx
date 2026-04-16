@@ -39,9 +39,12 @@ export function EditTicketModal({ ticket, repoId, onClose }: Props) {
   const [selectedPriority, setSelectedPriority] = useState<Priority>(
     PRIORITY_REVERSE_MAP[ticket.priority] ?? "MEDIUM",
   );
-  const [targetWorkspace, setTargetWorkspace] = useState(ticket.target_workspace ?? "");
+  const [targetWorkspace, setTargetWorkspace] = useState(
+    ticket.target_workspace ?? "",
+  );
 
-  const { mutate: updateTicket, isPending: isSubmitting } = useUpdateTicket(repoId);
+  const { mutate: updateTicket, isPending: isSubmitting } =
+    useUpdateTicket(repoId);
 
   const handlePrefixSelect = useCallback((prefix: Prefix) => {
     setSelectedPrefix(prefix);
@@ -172,7 +175,9 @@ export function EditTicketModal({ ticket, repoId, onClose }: Props) {
                   id="edit-priority"
                   className={s.selectField}
                   value={selectedPriority}
-                  onChange={(e) => setSelectedPriority(e.target.value as Priority)}
+                  onChange={(e) =>
+                    setSelectedPriority(e.target.value as Priority)
+                  }
                 >
                   {PRIORITIES.map((p) => (
                     <option key={p} value={p}>
