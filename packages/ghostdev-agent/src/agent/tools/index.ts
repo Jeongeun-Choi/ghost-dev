@@ -129,8 +129,19 @@ export function createTools(logger: AgentLogger) {
           execSync(`git checkout -b ${branchName}`);
         }
         execSync("git add -A");
+
+        const status = execSync("git status --porcelain", {
+          encoding: "utf-8",
+        }).trim();
+        if (!status) {
+          return {
+            error:
+              "커밋할 변경사항이 없습니다. 파일 수정이 제대로 이루어졌는지 확인하세요.",
+          };
+        }
+
         execSync(
-          `git commit --allow-empty -m "${commitMessage.replace(/"/g, '\\"')}"`,
+          `git commit -m "${commitMessage.replace(/"/g, '\\"')}"`,
         );
         execSync(`git push -f origin ${branchName}`);
 
