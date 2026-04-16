@@ -15,7 +15,10 @@ const RATE_LIMIT_RESET_BUFFER_MS = 65_000;
 const RECENT_STEPS_TO_KEEP = 10;
 const TOOL_RESULT_SUMMARIZE_THRESHOLD = 500;
 
-async function summarizeToolResult(toolName: string, result: string): Promise<string> {
+async function summarizeToolResult(
+  toolName: string,
+  result: string,
+): Promise<string> {
   try {
     const { text } = await generateText({
       model: anthropic("claude-haiku-4-5-20251001"),
@@ -33,7 +36,9 @@ async function summarizeToolResult(toolName: string, result: string): Promise<st
   }
 }
 
-async function compressOldToolResults(messages: CoreMessage[]): Promise<CoreMessage[]> {
+async function compressOldToolResults(
+  messages: CoreMessage[],
+): Promise<CoreMessage[]> {
   // CoreToolMessage (role: "tool") 개수 파악
   const toolMsgIndices = messages
     .map((m, i) => (m.role === "tool" ? i : -1))
@@ -42,7 +47,10 @@ async function compressOldToolResults(messages: CoreMessage[]): Promise<CoreMess
   if (toolMsgIndices.length <= RECENT_STEPS_TO_KEEP) return messages;
 
   // 오래된 것 = 최근 RECENT_STEPS_TO_KEEP개를 제외한 나머지
-  const oldToolIndices = toolMsgIndices.slice(0, toolMsgIndices.length - RECENT_STEPS_TO_KEEP);
+  const oldToolIndices = toolMsgIndices.slice(
+    0,
+    toolMsgIndices.length - RECENT_STEPS_TO_KEEP,
+  );
   const toCompressSet = new Set(oldToolIndices);
   // 압축 영역의 마지막 메시지에 캐시 브레이크포인트 설정
   const cacheBreakpointIndex = oldToolIndices[oldToolIndices.length - 1];
@@ -51,7 +59,11 @@ async function compressOldToolResults(messages: CoreMessage[]): Promise<CoreMess
 
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i];
-    if (!toCompressSet.has(i) || m.role !== "tool" || !Array.isArray(m.content)) {
+    if (
+      !toCompressSet.has(i) ||
+      m.role !== "tool" ||
+      !Array.isArray(m.content)
+    ) {
       result.push(m);
       continue;
     }
@@ -59,14 +71,22 @@ async function compressOldToolResults(messages: CoreMessage[]): Promise<CoreMess
     const compressed = await Promise.all(
       m.content.map(async (part) => {
         // ToolResultPart에는 toolName이 필수 — 모든 필드 보존 후 result만 교체
-        const p = part as { type?: string; toolCallId?: string; toolName?: string; result?: unknown };
+        const p = part as {
+          type?: string;
+          toolCallId?: string;
+          toolName?: string;
+          result?: unknown;
+        };
         if (
           p.type === "tool-result" &&
           typeof p.result === "string" &&
           p.result.length > TOOL_RESULT_SUMMARIZE_THRESHOLD &&
           !p.result.startsWith("[summary:")
         ) {
-          const summary = await summarizeToolResult(p.toolName ?? "unknown", p.result);
+          const summary = await summarizeToolResult(
+            p.toolName ?? "unknown",
+            p.result,
+          );
           return {
             type: "tool-result" as const,
             toolName: p.toolName ?? "",
@@ -102,26 +122,40 @@ function getWipBranch(ticketId: string): string {
   return `ghostdev/wip/${ticketId}`;
 }
 
-async function saveWipBranch(ticketId: string, logger: AgentLogger): Promise<void> {
+async function saveWipBranch(
+  ticketId: string,
+  logger: AgentLogger,
+): Promise<void> {
   try {
-    const status = execSync("git status --porcelain", { encoding: "utf-8" }).trim();
+    const status = execSync("git status --porcelain", {
+      encoding: "utf-8",
+    }).trim();
     if (!status) return;
 
     const wipBranch = getWipBranch(ticketId);
     execSync(`git checkout -B ${wipBranch}`, { stdio: "pipe" });
     execSync("git add -A", { stdio: "pipe" });
-    execSync('git commit -m "chore: WIP checkpoint (auto-saved on error)"', { stdio: "pipe" });
+    execSync('git commit -m "chore: WIP checkpoint (auto-saved on error)"', {
+      stdio: "pipe",
+    });
     execSync(`git push -f origin ${wipBranch}`, { stdio: "pipe" });
     await logger.info(`WIP 브랜치 저장 완료: ${wipBranch}`);
   } catch (err) {
-    await logger.error(`WIP 브랜치 저장 실패 (무시): ${err instanceof Error ? err.message : String(err)}`);
+    await logger.error(
+      `WIP 브랜치 저장 실패 (무시): ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
-async function restoreWipBranch(ticketId: string, logger: AgentLogger): Promise<void> {
+async function restoreWipBranch(
+  ticketId: string,
+  logger: AgentLogger,
+): Promise<void> {
   try {
     const wipBranch = getWipBranch(ticketId);
-    execSync(`git ls-remote --exit-code origin refs/heads/${wipBranch}`, { stdio: "pipe" });
+    execSync(`git ls-remote --exit-code origin refs/heads/${wipBranch}`, {
+      stdio: "pipe",
+    });
     execSync(`git fetch origin ${wipBranch}`, { stdio: "pipe" });
     execSync(`git checkout ${wipBranch}`, { stdio: "pipe" });
     await logger.info(`WIP 브랜치 복원: ${wipBranch}`);
@@ -183,7 +217,9 @@ export async function runAgent({
 
   if (isResuming) {
     await restoreWipBranch(ticketId, logger);
-    await logger.info(`체크포인트 복원: ${checkpoint.length}개 메시지에서 재개`);
+    await logger.info(
+      `체크포인트 복원: ${checkpoint.length}개 메시지에서 재개`,
+    );
   } else {
     await logger.info(`티켓 구현 시작: ${ticketTitle}`);
   }
@@ -193,7 +229,10 @@ export async function runAgent({
     : [
         {
           role: "system",
-          content: buildSystemPrompt({ repoPath: process.cwd(), targetWorkspace }),
+          content: buildSystemPrompt({
+            repoPath: process.cwd(),
+            targetWorkspace,
+          }),
           experimental_providerMetadata: {
             anthropic: { cacheControl: { type: "ephemeral" } },
           },
@@ -209,7 +248,9 @@ export async function runAgent({
         },
       ];
 
-  let result: Awaited<ReturnType<typeof generateText<typeof tools>>> | undefined;
+  let result:
+    | Awaited<ReturnType<typeof generateText<typeof tools>>>
+    | undefined;
 
   for (let attempt = 1; attempt <= MAX_OUTER_RETRIES; attempt++) {
     try {

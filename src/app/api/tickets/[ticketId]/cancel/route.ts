@@ -31,7 +31,10 @@ export async function POST(_request: NextRequest, { params }: Params) {
   }
 
   if (ticket.status !== "IN_PROGRESS") {
-    return NextResponse.json({ error: "Ticket is not cancellable" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Ticket is not cancellable" },
+      { status: 400 },
+    );
   }
 
   // 최신 실행 중인 run 조회

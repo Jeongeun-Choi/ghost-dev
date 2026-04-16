@@ -15,7 +15,11 @@ interface TicketLogSectionProps {
   logWrapperClassName?: string;
 }
 
-export function TicketLogSection({ ticketId, initialRunId, logWrapperClassName }: TicketLogSectionProps) {
+export function TicketLogSection({
+  ticketId,
+  initialRunId,
+  logWrapperClassName,
+}: TicketLogSectionProps) {
   const runId = useLatestRun(ticketId, initialRunId);
   if (!runId) return null;
   return (

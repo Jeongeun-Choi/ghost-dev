@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGitHubRepos, useRepos, useCreateRepo } from "@/features/repos/hooks";
+import {
+  useGitHubRepos,
+  useRepos,
+  useCreateRepo,
+} from "@/features/repos/hooks";
 import { fetchMonorepoConfig } from "@/features/repos/queries";
 import type { Repo } from "@/types";
 import * as s from "./page.css";
@@ -23,12 +27,17 @@ export default function ReposPage() {
   const queryClient = useQueryClient();
   const [activatingRepoId, setActivatingRepoId] = useState<string | null>(null);
 
-  const { data: gitHubRepos = [] as GitHubRepo[], isLoading: isGitHubReposLoading } = useGitHubRepos();
+  const {
+    data: gitHubRepos = [] as GitHubRepo[],
+    isLoading: isGitHubReposLoading,
+  } = useGitHubRepos();
   const { data: dbRepos = [] } = useRepos();
   const createRepo = useCreateRepo();
 
   const handleRepoClick = async (repo: GitHubRepo) => {
-    const existingRepo = (dbRepos as Repo[]).find((r) => r.repo_node_id === repo.id);
+    const existingRepo = (dbRepos as Repo[]).find(
+      (r) => r.repo_node_id === repo.id,
+    );
     if (existingRepo) {
       router.push(`/repos/${existingRepo.id}`);
       return;
@@ -100,8 +109,12 @@ export default function ReposPage() {
                 <div className={s.cardRepo}>
                   <span>⎇</span>
                   <span>{repo.fullName}</span>
-                  {repo.private && <span className={s.privateBadge}>PRIVATE</span>}
-                  {isActivated && <span className={s.activatedBadge}>ACTIVE</span>}
+                  {repo.private && (
+                    <span className={s.privateBadge}>PRIVATE</span>
+                  )}
+                  {isActivated && (
+                    <span className={s.activatedBadge}>ACTIVE</span>
+                  )}
                 </div>
                 <div className={s.cardTitle}>{repo.name}</div>
                 {repo.description && (
@@ -115,7 +128,11 @@ export default function ReposPage() {
                     onClick={() => handleRepoClick(repo)}
                     disabled={isActivating}
                   >
-                    {isActivating ? "ACTIVATING..." : isActivated ? "OPEN →" : "ACTIVATE →"}
+                    {isActivating
+                      ? "ACTIVATING..."
+                      : isActivated
+                        ? "OPEN →"
+                        : "ACTIVATE →"}
                   </button>
                 </div>
               </div>

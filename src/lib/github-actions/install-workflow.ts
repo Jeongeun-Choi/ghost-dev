@@ -41,7 +41,9 @@ export async function installWorkflowIfMissing(
     owner,
     repo,
     path,
-    message: existingSha ? "chore: update GhostDev workflow" : "chore: add GhostDev workflow",
+    message: existingSha
+      ? "chore: update GhostDev workflow"
+      : "chore: add GhostDev workflow",
     content,
     branch,
     ...(existingSha && { sha: existingSha }),

@@ -52,7 +52,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     .eq("id", runId);
 
   if (run.ticket_id) {
-    const ticketUpdate: { status: string; pr_url?: string; pr_number?: number } = { status: "DONE" };
+    const ticketUpdate: {
+      status: string;
+      pr_url?: string;
+      pr_number?: number;
+    } = { status: "DONE" };
     if (parsed.data.prUrl) ticketUpdate.pr_url = parsed.data.prUrl;
     if (parsed.data.prNumber) ticketUpdate.pr_number = parsed.data.prNumber;
     await supabase

@@ -8,6 +8,7 @@ argument-hint: "[프로젝트] [현재상태] → [변경할상태] (예: GAD to
 ## 인자 파싱 규칙
 
 인자에서 프로젝트 키, (선택) 담당자, 현재 상태, 변경할 상태를 파싱합니다.
+
 - 형식: `[프로젝트] [담당자?] [현재상태] → [변경할상태]`
 - 담당자 생략 시 나에게 할당된 티켓만 조회
 - 담당자에 `all` 입력 시 전체 티켓 조회
@@ -22,12 +23,12 @@ argument-hint: "[프로젝트] [현재상태] → [변경할상태] (예: GAD to
 
 아래 키워드로 Jira 상태를 유연하게 입력할 수 있습니다:
 
-| 입력 키워드 | Jira 상태 |
-|------------|-----------|
-| `todo`, `할일`, `to do` | To Do |
+| 입력 키워드                                   | Jira 상태   |
+| --------------------------------------------- | ----------- |
+| `todo`, `할일`, `to do`                       | To Do       |
 | `inprogress`, `진행`, `진행중`, `in progress` | In Progress |
-| `done`, `완료`, `finished` | Done |
-| `review`, `리뷰`, `in review` | In Review |
+| `done`, `완료`, `finished`                    | Done        |
+| `review`, `리뷰`, `in review`                 | In Review   |
 
 ## 절차
 
@@ -41,7 +42,8 @@ argument-hint: "[프로젝트] [현재상태] → [변경할상태] (예: GAD to
 3. `searchJiraIssuesUsingJql`로 해당 상태의 티켓 목록 조회
    - cloudId: `5cb4cb5b-d580-4515-8816-d95e15faafe5`
    - JQL 예시: `project = GAD AND status = "To Do" AND assignee = "[account_id]" ORDER BY created DESC`
-3. 조회된 티켓 목록을 번호와 함께 보여주고 선택 요청:
+4. 조회된 티켓 목록을 번호와 함께 보여주고 선택 요청:
+
    ```
    "To Do" 상태의 티켓 목록입니다. 변경할 티켓 번호를 선택하세요:
    1. GAD-1: 티켓 제목
@@ -50,11 +52,13 @@ argument-hint: "[프로젝트] [현재상태] → [변경할상태] (예: GAD to
 
    전체 선택: all / 개별 선택: 1,3 / 범위 선택: 1-3
    ```
-4. 사용자 선택 파싱:
+
+5. 사용자 선택 파싱:
    - `all` → 전체 티켓
    - `1,3` → 1번, 3번 티켓
    - `1-3` → 1번~3번 티켓
-5. 변경 대상 티켓 목록과 함께 최종 확인 요청:
+6. 변경 대상 티켓 목록과 함께 최종 확인 요청:
+
    ```
    다음 N개 티켓을 "To Do" → "In Progress"로 변경합니다:
    - GAD-1: 티켓 제목
@@ -62,9 +66,10 @@ argument-hint: "[프로젝트] [현재상태] → [변경할상태] (예: GAD to
 
    진행할까요?
    ```
-6. 확인 후 첫 번째 티켓에 `getTransitionsForJiraIssue`로 유효한 transition ID 조회
-7. 변경할 상태와 매칭되는 transition ID로 모든 대상 티켓에 `transitionJiraIssue` 순차 적용
-8. 완료 결과 반환:
+
+7. 확인 후 첫 번째 티켓에 `getTransitionsForJiraIssue`로 유효한 transition ID 조회
+8. 변경할 상태와 매칭되는 transition ID로 모든 대상 티켓에 `transitionJiraIssue` 순차 적용
+9. 완료 결과 반환:
    ```
    ✓ GAD-1: In Progress로 변경 완료
    ✓ GAD-3: In Progress로 변경 완료

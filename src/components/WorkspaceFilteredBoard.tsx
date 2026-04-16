@@ -22,10 +22,7 @@ export function WorkspaceFilteredBoard({
 }: Props) {
   const [activeWorkspace, setActiveWorkspace] = useState<string>("ALL");
 
-  const { data: tickets = initialTickets } = useTickets(
-    repoId,
-    initialTickets,
-  );
+  const { data: tickets = initialTickets } = useTickets(repoId, initialTickets);
 
   const filteredTickets =
     activeWorkspace === "ALL"

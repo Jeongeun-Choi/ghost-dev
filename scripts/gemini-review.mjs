@@ -10,7 +10,9 @@ const REPO = process.env.REPO;
 let PR_NUMBER = process.env.PR_NUMBER;
 if (!PR_NUMBER && GITHUB_TOKEN) {
   try {
-    console.log("PR_NUMBER not found, attempting to find it for current branch...");
+    console.log(
+      "PR_NUMBER not found, attempting to find it for current branch...",
+    );
     PR_NUMBER = execSync("gh pr view --json number -q .number", {
       encoding: "utf-8",
       env: { ...process.env, GH_TOKEN: GITHUB_TOKEN },
@@ -58,10 +60,14 @@ if (!diff || !diff.trim()) {
 
 const MAX_CHARS = 30_000; // Reduced from 100,000 for Free Tier TPM stability
 if (diff.length > 3000) {
-  console.log(`Current diff size: ${diff.length} characters (Max: ${MAX_CHARS})`);
+  console.log(
+    `Current diff size: ${diff.length} characters (Max: ${MAX_CHARS})`,
+  );
 }
 const truncatedDiff =
-  diff.length > MAX_CHARS ? diff.substring(0, MAX_CHARS) + "\n...(truncated)..." : diff;
+  diff.length > MAX_CHARS
+    ? diff.substring(0, MAX_CHARS) + "\n...(truncated)..."
+    : diff;
 
 // Read CLAUDE.md for project conventions
 let conventions = "";
@@ -194,7 +200,9 @@ ${truncatedDiff}`;
 
       if (response.status === 429) {
         if (attempt === maxRetries) {
-          throw new Error("Gemini API Error: 429 Too Many Requests (Max retries reached)");
+          throw new Error(
+            "Gemini API Error: 429 Too Many Requests (Max retries reached)",
+          );
         }
         const delay = initialDelay * Math.pow(1.5, attempt - 1);
         console.warn(
@@ -205,7 +213,9 @@ ${truncatedDiff}`;
       }
 
       if (!response.ok) {
-        throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Gemini API Error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -216,7 +226,9 @@ ${truncatedDiff}`;
       return JSON.parse(text);
     } catch (error) {
       if (attempt === maxRetries) throw error;
-      console.error(`[Attempt ${attempt}/${maxRetries}] ❌ Error: ${error.message}`);
+      console.error(
+        `[Attempt ${attempt}/${maxRetries}] ❌ Error: ${error.message}`,
+      );
       await sleep(5000 * attempt); // Short delay for other errors
     }
   }
@@ -260,7 +272,9 @@ async function postGithubReview(summary, inlineComments) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`GitHub Review API Error: ${response.status} - ${errorText}`);
+    throw new Error(
+      `GitHub Review API Error: ${response.status} - ${errorText}`,
+    );
   }
 
   return response.json();
@@ -302,7 +316,10 @@ try {
     await postGithubReview(review.summary, review.inline_comments ?? []);
     console.log("Review posted successfully.");
   } catch (reviewError) {
-    console.warn("Inline review failed, falling back to comment:", reviewError.message);
+    console.warn(
+      "Inline review failed, falling back to comment:",
+      reviewError.message,
+    );
     await postFallbackComment(review.summary);
     console.log("Fallback comment posted.");
   }

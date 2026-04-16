@@ -1,6 +1,8 @@
 import { execSync } from "child_process";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : "";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+  ? process.env.GEMINI_API_KEY.trim()
+  : "";
 
 if (!GEMINI_API_KEY) {
   console.error("Error: GEMINI_API_KEY is not set.");
@@ -23,7 +25,9 @@ try {
   // Truncate if extremely large (e.g., > 100k chars) just to be safe and fast
   const MAX_CHARS = 100000;
   const truncatedDiff =
-    diff.length > MAX_CHARS ? diff.substring(0, MAX_CHARS) + "\n...(truncated)..." : diff;
+    diff.length > MAX_CHARS
+      ? diff.substring(0, MAX_CHARS) + "\n...(truncated)..."
+      : diff;
 
   generateSummary(truncatedDiff);
 } catch (error) {
@@ -71,7 +75,9 @@ ${diffData}
     );
 
     if (!response.ok) {
-      throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Gemini API Error: ${response.status} ${response.statusText}`,
+      );
     }
 
     const data = await response.json();

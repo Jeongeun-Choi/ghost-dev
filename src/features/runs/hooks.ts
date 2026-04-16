@@ -31,7 +31,9 @@ export function useCancelRun(repoId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const res = await fetch(`/api/tickets/${ticketId}/cancel`, { method: "POST" });
+      const res = await fetch(`/api/tickets/${ticketId}/cancel`, {
+        method: "POST",
+      });
       if (!res.ok) throw new Error("취소에 실패했습니다.");
       return res.json();
     },

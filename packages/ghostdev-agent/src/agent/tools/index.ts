@@ -1,6 +1,12 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from "fs";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+} from "fs";
 import { execSync } from "child_process";
 import { resolve, join, dirname } from "path";
 import { Octokit } from "@octokit/rest";
@@ -48,7 +54,10 @@ export function createTools(logger: AgentLogger) {
     listDirectory: tool({
       description: "List directory contents.",
       parameters: z.object({
-        path: z.string().default(".").describe("Repo-relative path (default: root)"),
+        path: z
+          .string()
+          .default(".")
+          .describe("Repo-relative path (default: root)"),
         recursive: z.boolean().default(false),
       }),
       execute: async ({ path, recursive }) => {
@@ -97,9 +106,12 @@ export function createTools(logger: AgentLogger) {
     }),
 
     createPR: tool({
-      description: "Commit changes, push to a new branch, and open a Pull Request.",
+      description:
+        "Commit changes, push to a new branch, and open a Pull Request.",
       parameters: z.object({
-        branchName: z.string().describe("New branch name (e.g. ghostdev/fix-auth-bug)"),
+        branchName: z
+          .string()
+          .describe("New branch name (e.g. ghostdev/fix-auth-bug)"),
         commitMessage: z.string().describe("Commit message"),
         prTitle: z.string().describe("PR title"),
         prBody: z.string().describe("PR body (markdown)"),
@@ -108,14 +120,18 @@ export function createTools(logger: AgentLogger) {
         await logger.info(`브랜치 생성: ${branchName}`);
 
         // WIP 브랜치에서 재개된 경우: rename으로 이어서 사용
-        const currentBranch = execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" }).trim();
+        const currentBranch = execSync("git rev-parse --abbrev-ref HEAD", {
+          encoding: "utf-8",
+        }).trim();
         if (currentBranch.startsWith("ghostdev/wip/")) {
           execSync(`git branch -m ${branchName}`);
         } else {
           execSync(`git checkout -b ${branchName}`);
         }
         execSync("git add -A");
-        execSync(`git commit --allow-empty -m "${commitMessage.replace(/"/g, '\\"')}"`);
+        execSync(
+          `git commit --allow-empty -m "${commitMessage.replace(/"/g, '\\"')}"`,
+        );
         execSync(`git push -f origin ${branchName}`);
 
         const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
