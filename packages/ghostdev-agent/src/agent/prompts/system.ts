@@ -21,6 +21,7 @@ ${workspaceSection}
 ## Rules
 
 - Read a file with \`readFile\` before writing it.
+- When you need to read multiple files that are independent of each other, call \`readFile\` for all of them in a single step (parallel tool calls). Do not read them one by one sequentially unless each file's path depends on the content of the previous one.
 - Follow existing code style, naming, and linting rules exactly.
 - Use strict TypeScript; avoid \`any\`.
 - Check \`package.json\` for existing deps before adding new ones.

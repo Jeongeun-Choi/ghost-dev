@@ -12,9 +12,27 @@ const RATE_LIMIT_RESET_BUFFER_MS = 65_000;
 // 오래된 tool_result 메시지를 압축해 context 크기를 줄임
 // 최근 RECENT_STEPS_TO_KEEP 스텝은 원본 유지, 그 이전은 긴 내용을 요약으로 대체
 const RECENT_STEPS_TO_KEEP = 10;
-const TOOL_RESULT_TRUNCATE_THRESHOLD = 500;
+const TOOL_RESULT_SUMMARIZE_THRESHOLD = 500;
 
-function compressOldToolResults(messages: CoreMessage[]): CoreMessage[] {
+async function summarizeToolResult(toolName: string, result: string): Promise<string> {
+  try {
+    const { text } = await generateText({
+      model: anthropic("claude-haiku-4-5-20251001"),
+      messages: [
+        {
+          role: "user",
+          content: `Summarize this tool result in 2-3 sentences, keeping key info (file paths, error messages, important values) for a coding agent to continue its work.\n\nTool: ${toolName}\nResult: ${result}`,
+        },
+      ],
+      maxTokens: 200,
+    });
+    return `[summary: ${text}]`;
+  } catch {
+    return result;
+  }
+}
+
+async function compressOldToolResults(messages: CoreMessage[]): Promise<CoreMessage[]> {
   // CoreToolMessage (role: "tool") 개수 파악
   const toolMsgIndices = messages
     .map((m, i) => (m.role === "tool" ? i : -1))
@@ -23,30 +41,57 @@ function compressOldToolResults(messages: CoreMessage[]): CoreMessage[] {
   if (toolMsgIndices.length <= RECENT_STEPS_TO_KEEP) return messages;
 
   // 오래된 것 = 최근 RECENT_STEPS_TO_KEEP개를 제외한 나머지
-  const toCompressSet = new Set(toolMsgIndices.slice(0, toolMsgIndices.length - RECENT_STEPS_TO_KEEP));
+  const oldToolIndices = toolMsgIndices.slice(0, toolMsgIndices.length - RECENT_STEPS_TO_KEEP);
+  const toCompressSet = new Set(oldToolIndices);
+  // 압축 영역의 마지막 메시지에 캐시 브레이크포인트 설정
+  const cacheBreakpointIndex = oldToolIndices[oldToolIndices.length - 1];
 
-  return messages.map((m, i) => {
-    if (!toCompressSet.has(i) || m.role !== "tool" || !Array.isArray(m.content)) return m;
+  const result: CoreMessage[] = [];
 
-    const compressed = m.content.map((part) => {
-      // ToolResultPart에는 toolName이 필수 — 모든 필드 보존 후 result만 교체
-      const p = part as { type?: string; toolCallId?: string; toolName?: string; result?: unknown };
-      if (
-        p.type === "tool-result" &&
-        typeof p.result === "string" &&
-        p.result.length > TOOL_RESULT_TRUNCATE_THRESHOLD
-      ) {
-        return {
-          type: "tool-result" as const,
-          toolName: p.toolName ?? "",
-          toolCallId: p.toolCallId ?? "",
-          result: `[truncated: ${p.result.length} chars]`,
-        };
-      }
-      return part;
-    });
-    return { ...m, content: compressed };
-  });
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    if (!toCompressSet.has(i) || m.role !== "tool" || !Array.isArray(m.content)) {
+      result.push(m);
+      continue;
+    }
+
+    const compressed = await Promise.all(
+      m.content.map(async (part) => {
+        // ToolResultPart에는 toolName이 필수 — 모든 필드 보존 후 result만 교체
+        const p = part as { type?: string; toolCallId?: string; toolName?: string; result?: unknown };
+        if (
+          p.type === "tool-result" &&
+          typeof p.result === "string" &&
+          p.result.length > TOOL_RESULT_SUMMARIZE_THRESHOLD &&
+          !p.result.startsWith("[summary:")
+        ) {
+          const summary = await summarizeToolResult(p.toolName ?? "unknown", p.result);
+          return {
+            type: "tool-result" as const,
+            toolName: p.toolName ?? "",
+            toolCallId: p.toolCallId ?? "",
+            result: summary,
+          };
+        }
+        return part;
+      }),
+    );
+
+    const base = { ...m, content: compressed };
+    // 압축 영역의 마지막 메시지에 캐시 브레이크포인트 추가
+    if (i === cacheBreakpointIndex) {
+      result.push({
+        ...base,
+        experimental_providerMetadata: {
+          anthropic: { cacheControl: { type: "ephemeral" } },
+        },
+      });
+    } else {
+      result.push(base);
+    }
+  }
+
+  return result;
 }
 
 function getRetryAfterMs(err: RetryError): number {
@@ -112,7 +157,7 @@ export async function runAgent({
           for (const msg of step.response.messages) {
             messages.push(msg);
           }
-          const compressed = compressOldToolResults(messages);
+          const compressed = await compressOldToolResults(messages);
           // in-place 업데이트 (generateText가 같은 배열 참조를 사용하므로)
           messages.splice(0, messages.length, ...compressed);
           await logger.saveCheckpoint(messages);
