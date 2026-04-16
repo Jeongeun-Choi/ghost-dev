@@ -107,10 +107,16 @@ export function createTools(logger: AgentLogger) {
       execute: async ({ branchName, commitMessage, prTitle, prBody }) => {
         await logger.info(`브랜치 생성: ${branchName}`);
 
-        execSync(`git checkout -b ${branchName}`);
+        // WIP 브랜치에서 재개된 경우: rename으로 이어서 사용
+        const currentBranch = execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" }).trim();
+        if (currentBranch.startsWith("ghostdev/wip/")) {
+          execSync(`git branch -m ${branchName}`);
+        } else {
+          execSync(`git checkout -b ${branchName}`);
+        }
         execSync("git add -A");
-        execSync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`);
-        execSync(`git push origin ${branchName}`);
+        execSync(`git commit --allow-empty -m "${commitMessage.replace(/"/g, '\\"')}"`);
+        execSync(`git push -f origin ${branchName}`);
 
         const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
         const [owner, repo] = process.env.GITHUB_REPOSITORY!.split("/");

@@ -1,9 +1,10 @@
-import { generateText, type CoreMessage, RetryError } from "ai";
+import { generateText, type CoreMessage, APICallError } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { execSync } from "child_process";
 import { createTools } from "./tools/index.js";
 import { buildSystemPrompt } from "./prompts/system.js";
 import { buildTicketPrompt } from "./prompts/ticket.js";
-import type { AgentInput, AgentResult } from "../types.js";
+import type { AgentInput, AgentResult, AgentLogger } from "../types.js";
 
 const MAX_OUTER_RETRIES = 3;
 const STEP_DELAY_MS = 30_000;
@@ -94,16 +95,80 @@ async function compressOldToolResults(messages: CoreMessage[]): Promise<CoreMess
   return result;
 }
 
-function getRetryAfterMs(err: RetryError): number {
-  const lastError = (err as RetryError & { lastError?: { responseHeaders?: Record<string, string> } }).lastError;
-  const retryAfter = lastError?.responseHeaders?.["retry-after"];
+function getWipBranch(ticketId: string): string {
+  if (!/^[a-zA-Z0-9_-]+$/.test(ticketId)) {
+    throw new Error(`Invalid ticketId for branch name: ${ticketId}`);
+  }
+  return `ghostdev/wip/${ticketId}`;
+}
+
+async function saveWipBranch(ticketId: string, logger: AgentLogger): Promise<void> {
+  try {
+    const status = execSync("git status --porcelain", { encoding: "utf-8" }).trim();
+    if (!status) return;
+
+    const wipBranch = getWipBranch(ticketId);
+    execSync(`git checkout -B ${wipBranch}`, { stdio: "pipe" });
+    execSync("git add -A", { stdio: "pipe" });
+    execSync('git commit -m "chore: WIP checkpoint (auto-saved on error)"', { stdio: "pipe" });
+    execSync(`git push -f origin ${wipBranch}`, { stdio: "pipe" });
+    await logger.info(`WIP 브랜치 저장 완료: ${wipBranch}`);
+  } catch (err) {
+    await logger.error(`WIP 브랜치 저장 실패 (무시): ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function restoreWipBranch(ticketId: string, logger: AgentLogger): Promise<void> {
+  try {
+    const wipBranch = getWipBranch(ticketId);
+    execSync(`git ls-remote --exit-code origin refs/heads/${wipBranch}`, { stdio: "pipe" });
+    execSync(`git fetch origin ${wipBranch}`, { stdio: "pipe" });
+    execSync(`git checkout ${wipBranch}`, { stdio: "pipe" });
+    await logger.info(`WIP 브랜치 복원: ${wipBranch}`);
+  } catch {
+    // 브랜치 없으면 무시 — 신규 실행처럼 진행
+  }
+}
+
+function cleanupWipBranch(ticketId: string): void {
+  try {
+    const wipBranch = getWipBranch(ticketId);
+    execSync(`git push origin --delete ${wipBranch}`, { stdio: "pipe" });
+  } catch {
+    // 없으면 무시
+  }
+}
+
+function isRateLimitError(err: unknown): boolean {
+  if (APICallError.isInstance(err) && err.statusCode === 429) return true;
+  return false;
+}
+
+function getRetryAfterMs(err: unknown): number {
+  const headers = APICallError.isInstance(err)
+    ? (err.responseHeaders as Record<string, string> | undefined)
+    : undefined;
+
+  // 토큰 리셋 시간 기반 (가장 정확)
+  const resetTime = headers?.["anthropic-ratelimit-input-tokens-reset"];
+  if (resetTime) {
+    const msUntilReset = new Date(resetTime).getTime() - Date.now();
+    if (msUntilReset > 0) {
+      return msUntilReset + 5_000;
+    }
+  }
+
+  // fallback: retry-after 헤더
+  const retryAfter = headers?.["retry-after"];
   if (retryAfter) {
     return (parseInt(retryAfter, 10) + 5) * 1000;
   }
+
   return RATE_LIMIT_RESET_BUFFER_MS;
 }
 
 export async function runAgent({
+  ticketId,
   ticketTitle,
   ticketDescription,
   baseBranch,
@@ -117,6 +182,7 @@ export async function runAgent({
   const isResuming = checkpoint !== null && checkpoint.length > 0;
 
   if (isResuming) {
+    await restoreWipBranch(ticketId, logger);
     await logger.info(`체크포인트 복원: ${checkpoint.length}개 메시지에서 재개`);
   } else {
     await logger.info(`티켓 구현 시작: ${ticketTitle}`);
@@ -153,6 +219,7 @@ export async function runAgent({
         tools,
         maxSteps: 50,
         maxTokens: 8192,
+        maxRetries: 0,
         onStepFinish: async (step) => {
           for (const msg of step.response.messages) {
             messages.push(msg);
@@ -170,18 +237,21 @@ export async function runAgent({
       });
       break;
     } catch (err) {
-      if (RetryError.isInstance(err) && attempt < MAX_OUTER_RETRIES) {
+      if (isRateLimitError(err) && attempt < MAX_OUTER_RETRIES) {
+        const waitMs = getRetryAfterMs(err);
         await logger.info(
-          `Rate limit exhausted (attempt ${attempt}/${MAX_OUTER_RETRIES}). Waiting ${RATE_LIMIT_RESET_BUFFER_MS / 1000}s for window reset...`,
+          `Rate limit 도달 (${attempt}/${MAX_OUTER_RETRIES}). ${Math.ceil(waitMs / 1000)}초 후 재시도...`,
         );
-        await new Promise((r) => setTimeout(r, getRetryAfterMs(err)));
+        await new Promise((r) => setTimeout(r, waitMs));
       } else {
+        await saveWipBranch(ticketId, logger);
         throw err;
       }
     }
   }
 
   await logger.clearCheckpoint();
+  cleanupWipBranch(ticketId);
 
   const tokenUsage = {
     promptTokens: result!.usage.promptTokens,
