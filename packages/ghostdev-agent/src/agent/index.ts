@@ -108,7 +108,8 @@ async function compressOldToolResults(
         },
       });
     } else {
-      result.push(base);
+      const { experimental_providerMetadata: _old, ...cleanBase } = base as CoreMessage & { experimental_providerMetadata?: unknown };
+      result.push(cleanBase as CoreMessage);
     }
   }
 
