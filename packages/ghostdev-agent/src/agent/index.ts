@@ -116,6 +116,16 @@ async function compressOldToolResults(
   return result;
 }
 
+function stripStaleProviderMetadata(messages: CoreMessage[]): CoreMessage[] {
+  return messages.map((m) => {
+    if (m.role === "system") return m;
+    const { experimental_providerMetadata: _, ...rest } = m as CoreMessage & {
+      experimental_providerMetadata?: unknown;
+    };
+    return rest as CoreMessage;
+  });
+}
+
 function getWipBranch(ticketId: string): string {
   if (!/^[a-zA-Z0-9_-]+$/.test(ticketId)) {
     throw new Error(`Invalid ticketId for branch name: ${ticketId}`);
@@ -226,7 +236,7 @@ export async function runAgent({
   }
 
   const messages: CoreMessage[] = isResuming
-    ? checkpoint
+    ? stripStaleProviderMetadata(checkpoint)
     : [
         {
           role: "system",
