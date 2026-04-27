@@ -35,6 +35,24 @@ export const workspaceTag = style({
   opacity: 0.8,
 });
 
+export const cardDelete = style({
+  width: "32px",
+  height: "32px",
+  backgroundColor: "transparent",
+  border: `1px solid ${vars.color.cardBorder}`,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: vars.color.textDim,
+  cursor: "pointer",
+  flexShrink: 0,
+  transition: "all 0.15s",
+  ":hover": {
+    borderColor: vars.color.red,
+    color: vars.color.red,
+  },
+});
+
 export const title = style({
   fontSize: "16px",
   fontWeight: 700,

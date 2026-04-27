@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import * as s from "./TicketCard.css";
 import { useTriggerRun, useCancelRun } from "@/features/runs/hooks";
+import { useDeleteTicket } from "@/features/tickets/hooks";
 import { EditTicketModal } from "./EditTicketModal";
 import type { Ticket } from "@/types";
 
@@ -31,13 +32,12 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
   const router = useRouter();
   const triggerRun = useTriggerRun(repoId);
   const cancelRun = useCancelRun(repoId);
+  const deleteTicket = useDeleteTicket(repoId);
   const priority = getPriority(ticket.priority);
 
-  const isClickable =
-    ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
+  const isClickable = ticket.status === "IN_PROGRESS" || ticket.status === "DONE";
   const isEditable = ticket.status === "TODO" || ticket.status === "FAILED";
-  const isTriggerVisible =
-    ticket.status === "TODO" || ticket.status === "FAILED";
+  const isTriggerVisible = ticket.status === "TODO" || ticket.status === "FAILED";
   const isCancellable = ticket.status === "IN_PROGRESS";
 
   const handleCardClick = () => {
@@ -68,6 +68,11 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
     setIsEditOpen(true);
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteTicket.mutate(ticket.id);
+  };
+
   return (
     <>
       <div
@@ -77,17 +82,28 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
       >
         <div className={s.cardHeader}>
           <span className={s.ticketId}>{getTicketDisplayId(ticket.id)}</span>
-          {workspaceTag && (
-            <span className={s.workspaceTag}>{workspaceTag}</span>
-          )}
+          {workspaceTag && <span className={s.workspaceTag}>{workspaceTag}</span>}
+          <button
+            className={s.cardDelete}
+            onClick={handleDelete}
+            disabled={deleteTicket.isPending}
+            aria-label="티켓 삭제"
+            title="삭제"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+          </button>
         </div>
 
         <p className={s.title}>{ticket.title}</p>
 
         <div className={s.cardFooter}>
-          <span className={`${s.badge} ${s.badgeVariants[priority]}`}>
-            {priority}
-          </span>
+          <span className={`${s.badge} ${s.badgeVariants[priority]}`}>{priority}</span>
 
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             {ticket.status === "DONE" && ticket.pr_url && (
@@ -130,11 +146,7 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
                     className={s.playButton}
                     onClick={handleRun}
                     disabled={triggerRun.isPending}
-                    title={
-                      ticket.status === "FAILED"
-                        ? "수동 재시도"
-                        : "AI 에이전트 실행"
-                    }
+                    title={ticket.status === "FAILED" ? "수동 재시도" : "AI 에이전트 실행"}
                     style={
                       triggerRun.isError || ticket.status === "FAILED"
                         ? { color: "#EF4444" }
@@ -157,11 +169,7 @@ export function TicketCard({ ticket, repoId, workspaceTag }: TicketCardProps) {
       </div>
 
       {isEditOpen && (
-        <EditTicketModal
-          ticket={ticket}
-          repoId={repoId}
-          onClose={() => setIsEditOpen(false)}
-        />
+        <EditTicketModal ticket={ticket} repoId={repoId} onClose={() => setIsEditOpen(false)} />
       )}
     </>
   );

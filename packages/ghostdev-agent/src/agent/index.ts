@@ -15,10 +15,7 @@ const RATE_LIMIT_RESET_BUFFER_MS = 65_000;
 const RECENT_STEPS_TO_KEEP = 10;
 const TOOL_RESULT_SUMMARIZE_THRESHOLD = 500;
 
-async function summarizeToolResult(
-  toolName: string,
-  result: string,
-): Promise<string> {
+async function summarizeToolResult(toolName: string, result: string): Promise<string> {
   try {
     const { text } = await generateText({
       model: anthropic("claude-haiku-4-5-20251001"),
@@ -36,9 +33,7 @@ async function summarizeToolResult(
   }
 }
 
-async function compressOldToolResults(
-  messages: CoreMessage[],
-): Promise<CoreMessage[]> {
+async function compressOldToolResults(messages: CoreMessage[]): Promise<CoreMessage[]> {
   // CoreToolMessage (role: "tool") 개수 파악
   const toolMsgIndices = messages
     .map((m, i) => (m.role === "tool" ? i : -1))
@@ -47,10 +42,7 @@ async function compressOldToolResults(
   if (toolMsgIndices.length <= RECENT_STEPS_TO_KEEP) return messages;
 
   // 오래된 것 = 최근 RECENT_STEPS_TO_KEEP개를 제외한 나머지
-  const oldToolIndices = toolMsgIndices.slice(
-    0,
-    toolMsgIndices.length - RECENT_STEPS_TO_KEEP,
-  );
+  const oldToolIndices = toolMsgIndices.slice(0, toolMsgIndices.length - RECENT_STEPS_TO_KEEP);
   const toCompressSet = new Set(oldToolIndices);
   // 압축 영역의 마지막 메시지에 캐시 브레이크포인트 설정
   const cacheBreakpointIndex = oldToolIndices[oldToolIndices.length - 1];
@@ -59,11 +51,7 @@ async function compressOldToolResults(
 
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i];
-    if (
-      !toCompressSet.has(i) ||
-      m.role !== "tool" ||
-      !Array.isArray(m.content)
-    ) {
+    if (!toCompressSet.has(i) || m.role !== "tool" || !Array.isArray(m.content)) {
       result.push(m);
       continue;
     }
@@ -83,10 +71,7 @@ async function compressOldToolResults(
           p.result.length > TOOL_RESULT_SUMMARIZE_THRESHOLD &&
           !p.result.startsWith("[summary:")
         ) {
-          const summary = await summarizeToolResult(
-            p.toolName ?? "unknown",
-            p.result,
-          );
+          const summary = await summarizeToolResult(p.toolName ?? "unknown", p.result);
           return {
             type: "tool-result" as const,
             toolName: p.toolName ?? "",
@@ -108,7 +93,9 @@ async function compressOldToolResults(
         },
       });
     } else {
-      const { experimental_providerMetadata: _old, ...cleanBase } = base as CoreMessage & { experimental_providerMetadata?: unknown };
+      const { experimental_providerMetadata: _old, ...cleanBase } = base as CoreMessage & {
+        experimental_providerMetadata?: unknown;
+      };
       result.push(cleanBase as CoreMessage);
     }
   }
@@ -133,10 +120,7 @@ function getWipBranch(ticketId: string): string {
   return `ghostdev/wip/${ticketId}`;
 }
 
-async function saveWipBranch(
-  ticketId: string,
-  logger: AgentLogger,
-): Promise<void> {
+async function saveWipBranch(ticketId: string, logger: AgentLogger): Promise<void> {
   try {
     const status = execSync("git status --porcelain", {
       encoding: "utf-8",
@@ -158,10 +142,7 @@ async function saveWipBranch(
   }
 }
 
-async function restoreWipBranch(
-  ticketId: string,
-  logger: AgentLogger,
-): Promise<void> {
+async function restoreWipBranch(ticketId: string, logger: AgentLogger): Promise<void> {
   try {
     const wipBranch = getWipBranch(ticketId);
     execSync(`git ls-remote --exit-code origin refs/heads/${wipBranch}`, {
@@ -228,9 +209,7 @@ export async function runAgent({
 
   if (isResuming) {
     await restoreWipBranch(ticketId, logger);
-    await logger.info(
-      `체크포인트 복원: ${checkpoint.length}개 메시지에서 재개`,
-    );
+    await logger.info(`체크포인트 복원: ${checkpoint.length}개 메시지에서 재개`);
   } else {
     await logger.info(`티켓 구현 시작: ${ticketTitle}`);
   }
@@ -259,9 +238,7 @@ export async function runAgent({
         },
       ];
 
-  let result:
-    | Awaited<ReturnType<typeof generateText<typeof tools>>>
-    | undefined;
+  let result: Awaited<ReturnType<typeof generateText<typeof tools>>> | undefined;
 
   for (let attempt = 1; attempt <= MAX_OUTER_RETRIES; attempt++) {
     try {
